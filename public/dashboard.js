@@ -15,7 +15,7 @@ function logout() {
   }
   
 
-  fetch('http://localhost:3000/api/getAllSiteChecks', {
+  fetch('https://web-app-j994.onrender.com/api/getAllSiteChecks', {
     method: 'GET',
   })
   .then(response => response.json())

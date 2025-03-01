@@ -5,7 +5,7 @@ document.getElementById('loginForm').addEventListener('submit', function (event)
   const password = document.getElementById('password').value;
 
   // Send login data to the server
-  fetch('http://localhost:3000/login', {
+  fetch('https://web-app-j994.onrender.com/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password })
