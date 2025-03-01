@@ -1,5 +1,5 @@
 // login.js
-const apiUrl = process.env.API_URL || 'http://localhost:3000';  // Default to localhost for local development
+const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';  // Default to localhost for local development
 
 document.getElementById('loginForm').addEventListener('submit', function (event) {
   event.preventDefault();  // Prevent form from submitting the default way

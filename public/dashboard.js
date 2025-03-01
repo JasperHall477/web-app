@@ -1,5 +1,5 @@
 const token = localStorage.getItem('token');  // Check if token exists
-const apiUrl = process.env.API_URL || 'http://localhost:3000';
+const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
 if (!token) {
   window.location.href = 'login.html';  // Redirect to login if not authenticated
