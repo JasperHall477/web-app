@@ -1,5 +1,5 @@
 const token = localStorage.getItem('token');  // Check if token exists
-
+const apiUrl = process.env.API_URL || 'http://localhost:3000';
 
 if (!token) {
   window.location.href = 'login.html';  // Redirect to login if not authenticated
@@ -15,7 +15,7 @@ function logout() {
   }
   
 
-  fetch('http://localhost:3000/api/getAllSiteChecks', {
+  fetch(`${apiUrl}/api/getAllSiteChecks`, {
     method: 'GET',
   })
   .then(response => response.json())
