@@ -38,6 +38,7 @@ const siteCheckSchema = new mongoose.Schema({
   date: { type: Date, default: Date.now },  // Automatically set the current date
 });
 
+
 const SiteCheck = mongoose.model('SiteCheck', siteCheckSchema);
 
 // API to add site check result
@@ -49,7 +50,8 @@ app.post('/api/addSiteCheck', async (req, res) => {
       url,
       checkResult,
       validUntil: validUntil ? new Date(validUntil) : null, // Convert validUntil to Date
-      date: new Date()
+      date: new Date(),
+      userId: userId
     });
 
     await newCheck.save();  // Save the site check to MongoDB
@@ -62,6 +64,9 @@ app.post('/api/addSiteCheck', async (req, res) => {
 
 // API to get all site checks for the dashboard
 app.get('/api/getAllSiteChecks', async (req, res) => {
+
+  const userId = req.query.userId;
+
   try {
     const checks = await SiteCheck.find().sort({ date: -1 });  // Sort by date in descending order
     
@@ -82,7 +87,26 @@ app.get('/api/getAllSiteChecks', async (req, res) => {
 });
 
 
+app.post('/refresh-token', async (req, res) => {
+  const { refreshToken } = req.body;
 
+  if (!refreshToken) {
+    return res.status(401).json({ message: 'Refresh token required' });
+  }
+
+  try {
+    // Verify the refresh token (this is where the backend checks if the refresh token is valid)
+    const decoded = jwt.verify(refreshToken, 'your-refresh-token-secret');
+
+    // Create a new JWT token
+    const newToken = jwt.sign({ userId: decoded.userId }, 'your-secret-key', { expiresIn: '1h' });
+
+    res.status(200).json({ token: newToken });
+  } catch (error) {
+    console.error('Error refreshing token:', error);
+    res.status(403).json({ message: 'Invalid refresh token' });
+  }
+});
 
 
 // Register Route

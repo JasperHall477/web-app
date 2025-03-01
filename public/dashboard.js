@@ -13,13 +13,15 @@ function logout() {
     // Redirect the user to the login page
     window.location.href = 'login.html';
   }
-  
 
-  fetch('https://web-app-j994.onrender.com/api/getAllSiteChecks', {
-    method: 'GET',
-  })
+
+  const userId = localStorage.getItem('userId');
+
+  fetch(`https://web-app-j994.onrender.com/api/getAllSiteChecks?userId=${userId}`)
   .then(response => response.json())
   .then(data => {
+
+    console.log('Site Checks:', data);
     const table = document.getElementById('siteCheckTable').getElementsByTagName('tbody')[0];
   
     data.forEach(item => {
