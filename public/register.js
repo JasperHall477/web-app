@@ -1,35 +1,66 @@
-// api/login.js
+// document.getElementById('registerForm').addEventListener('submit', function (event) {
+//     event.preventDefault();  // Prevent form from submitting the default way
+  
+//     const username = document.getElementById('username').value;
+//     const password = document.getElementById('password').value;
+  
+//     // Send registration data to the server
+//     fetch('http://localhost:3000/register', {
+//       method: 'POST',
+//       headers: {
+//         'Content-Type': 'application/json',
+//       },
+//       body: JSON.stringify({ username, password }),
+//     })
+//       .then(response => response.json())
+//       .then(data => {
+//         if (data.message === 'User registered successfully') {
+//           document.getElementById('successMessage').style.display = 'block'; // Show success message
+//           document.getElementById('errorMessage').style.display = 'none';  // Hide error message
+//         } else {
+//           document.getElementById('errorMessage').textContent = data.message; // Show error message
+//           document.getElementById('errorMessage').style.display = 'block';
+//           document.getElementById('successMessage').style.display = 'none';  // Hide success message
+//         }
+//       })
+//       .catch(error => {
+//         console.error('Error:', error);
+//         document.getElementById('errorMessage').textContent = 'Something went wrong. Please try again.';
+//         document.getElementById('errorMessage').style.display = 'block';
+//       });
+//   });
 
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const mongoose = require('mongoose');
-const { User } = require('../models/User');  // Import the User model
+/*
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+*/
+  
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';  // Secret for JWT (you should keep this in an environment variable)
-
-const mongoURI = process.env.MONGODB_URI;  // MongoDB URI from environment variable
-mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true });
-
-module.exports = async (req, res) => {
-  if (req.method === 'POST') {
-    const { username, password } = req.body;
-
-    // Find the user in the database
-    const user = await User.findOne({ username });
-    if (!user) {
-      return res.status(400).json({ message: 'Invalid username or password' });
-    }
-
-    // Check if the password matches
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid username or password' });
-    }
-
-    // Generate a token and send it to the client
-    const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '1h' });
-    res.status(200).json({ token });
-  } else {
-    res.status(405).json({ message: 'Method Not Allowed' });
-  }
-};
+document.getElementById('registerForm').addEventListener('submit', function (event) {
+    event.preventDefault();  // Prevent form from submitting the default way
+  
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+  
+    // Send registration data to the server
+    fetch('http://localhost:3000/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    })
+      .then(response => response.json())
+      .then(data => {
+        console.log(data);  // Log response from server
+        if (data.message === 'User registered successfully') {
+          alert('Registration Successful!');
+        } else {
+          alert(data.message);
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+      });
+  });
+  
