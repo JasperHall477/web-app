@@ -8,16 +8,32 @@ const cors = require('cors');
 
 const app = express();
 
-app.use(cors({ origin: 'chrome-extension://fplldpkhjnlgmdogiijgoplgbbbjhfmh' }));
+const allowedOrigins = [
+  'https://web-app-lemon-chi.vercel.app', // Your Vercel frontend
+  'chrome-extension://fplldpkhjnlgmdogiijgoplgbbbjhfmh', // Your Chrome extension
+  // Add 'http://localhost:3000' for local testing if needed
+];
+
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, origin || '*');
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'OPTIONS'],
+  credentials: true // Optional, for cookies or auth headers
+}));
+
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
 
 // MongoDB connection
 mongoose.connect('mongodb+srv://SecuroUserLogin:bEqmNId6xb1f7P4G@securoproject.wwiq1.mongodb.net/?retryWrites=true&w=majority&appName=SecuroProject', { useNewUrlParser: true, useUnifiedTopology: true })
     .then(() => console.log('Connected to MongoDB'))
     .catch(err => console.error('Failed to connect to MongoDB:', err));
-
-// Middleware
-app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname, 'public')));
 
 
 const userSchema = new mongoose.Schema({
@@ -45,30 +61,7 @@ const siteCheckSchema = new mongoose.Schema({
 
 const SiteCheck = mongoose.model('SiteCheck', siteCheckSchema);
 
-// // API to add site check result
-// app.post('/api/addSiteCheck', async (req, res) => {
-//   const { url, checkResult, validUntil, userId } = req.body;
 
-//   if (!userId) {
-//     return res.status(400).json({ message: 'UserId is required' });
-//   }
-
-//   try {
-//     const newCheck = new SiteCheck({
-//       url,
-//       checkResult,
-//       validUntil: validUntil ? new Date(validUntil) : null, // Convert validUntil to Date
-//       date: new Date(),
-//       userId: userId
-//     });
-
-//     await newCheck.save();  // Save the site check to MongoDB
-//     res.status(201).json({ message: 'Site check saved successfully' });
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ message: 'Error saving site check' });
-//   }
-// });
 
 // Middleware to verify JWT
 const verifyToken = (req, res, next) => {
@@ -139,44 +132,93 @@ app.get('/api/getAllSiteChecks', verifyToken, async (req, res) => {
 
 
 // Register Route
+// app.post('/register', async (req, res) => {
+//   const { username, password } = req.body;
+//   const existingUser = await User.findOne({ username });
+
+//   if (existingUser) {
+//     return res.status(400).json({ message: 'Username already taken' });
+//   }
+
+//   const hashedPassword = await bcrypt.hash(password, 10);
+//   const newUser = new User({ username, password: hashedPassword });
+//   await newUser.save();
+//   res.status(201).json({ message: 'User registered successfully' });
+// });
+// CORS FIX 
 app.post('/register', async (req, res) => {
   const { username, password } = req.body;
-  const existingUser = await User.findOne({ username });
 
-  if (existingUser) {
-    return res.status(400).json({ message: 'Username already taken' });
+  try {
+    if (!username || !password) {
+      return res.status(400).json({ message: 'Username and password are required' });
+    }
+
+    const existingUser = await User.findOne({ username });
+    if (existingUser) {
+      return res.status(400).json({ message: 'Username already taken' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = new User({ username, password: hashedPassword });
+    await newUser.save();
+    res.status(201).json({ message: 'User registered successfully' });
+  } catch (error) {
+    console.error('Registration error:', error);
+    res.status(500).json({ message: 'Error registering user', error: error.message });
   }
-
-  const hashedPassword = await bcrypt.hash(password, 10);
-  const newUser = new User({ username, password: hashedPassword });
-  await newUser.save();
-  res.status(201).json({ message: 'User registered successfully' });
 });
-
 
 
 // Login Route
+// app.post('/login', async (req, res) => {
+//   const { username, password } = req.body;
+//   const user = await User.findOne({ username });
+
+//   if (!user) {
+//     return res.status(400).json({ message: 'Invalid username or password' });
+//   }
+
+//   const isMatch = await bcrypt.compare(password, user.password);
+//   if (!isMatch) {
+//     return res.status(400).json({ message: 'Invalid username or password' });
+//   }
+
+//   const token = jwt.sign({ username: user.username }, 'your-secret-key', { expiresIn: '1h' });
+//   //res.status(200).json({ message: 'Login successful', token });
+//   res.status(200).json({ 
+//     message: 'Login successful',
+//     token: token,
+//     userId: user.username // Send the username as userId
+//   });
+// });
 app.post('/login', async (req, res) => {
   const { username, password } = req.body;
-  const user = await User.findOne({ username });
 
-  if (!user) {
-    return res.status(400).json({ message: 'Invalid username or password' });
+  try {
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid username or password' });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Invalid username or password' });
+    }
+
+    const token = jwt.sign({ username: user.username }, 'your-secret-key', { expiresIn: '1h' });
+    res.status(200).json({
+      message: 'Login successful',
+      token,
+      userId: user.username
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ message: 'Error logging in', error: error.message });
   }
-
-  const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) {
-    return res.status(400).json({ message: 'Invalid username or password' });
-  }
-
-  const token = jwt.sign({ username: user.username }, 'your-secret-key', { expiresIn: '1h' });
-  //res.status(200).json({ message: 'Login successful', token });
-  res.status(200).json({ 
-    message: 'Login successful',
-    token: token,
-    userId: user.username // Send the username as userId
-  });
 });
+
+
 
 // Serve the homepage
 app.get('/', (req, res) => {
