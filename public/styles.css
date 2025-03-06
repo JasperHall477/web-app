@@ -6,7 +6,10 @@ body {
     background-color: #f0f0f0;
   }
 
-  
+  #usernameDisplay {
+    font-weight: bold;
+    color: #45a049;
+  }
   /* Navigation bar */
   nav ul {
     list-style-type: none;

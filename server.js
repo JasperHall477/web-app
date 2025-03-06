@@ -4,8 +4,11 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const path = require('path');
+const cors = require('cors');
 
 const app = express();
+
+app.use(cors({ origin: 'chrome-extension://fplldpkhjnlgmdogiijgoplgbbbjhfmh' }));
 
 // MongoDB connection
 mongoose.connect('mongodb+srv://SecuroUserLogin:bEqmNId6xb1f7P4G@securoproject.wwiq1.mongodb.net/?retryWrites=true&w=majority&appName=SecuroProject', { useNewUrlParser: true, useUnifiedTopology: true })
@@ -36,25 +39,69 @@ const siteCheckSchema = new mongoose.Schema({
   },
   validUntil: { type: Date, required: false },  // New field for SSL valid until date
   date: { type: Date, default: Date.now },  // Automatically set the current date
+  userId: { type: String, required: true }
 });
 
 
 const SiteCheck = mongoose.model('SiteCheck', siteCheckSchema);
 
-// API to add site check result
-app.post('/api/addSiteCheck', async (req, res) => {
+// // API to add site check result
+// app.post('/api/addSiteCheck', async (req, res) => {
+//   const { url, checkResult, validUntil, userId } = req.body;
+
+//   if (!userId) {
+//     return res.status(400).json({ message: 'UserId is required' });
+//   }
+
+//   try {
+//     const newCheck = new SiteCheck({
+//       url,
+//       checkResult,
+//       validUntil: validUntil ? new Date(validUntil) : null, // Convert validUntil to Date
+//       date: new Date(),
+//       userId: userId
+//     });
+
+//     await newCheck.save();  // Save the site check to MongoDB
+//     res.status(201).json({ message: 'Site check saved successfully' });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ message: 'Error saving site check' });
+//   }
+// });
+
+// Middleware to verify JWT
+const verifyToken = (req, res, next) => {
+  const token = req.headers['authorization']?.split(' ')[1]; // Expect "Bearer <token>"
+
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  jwt.verify(token, 'your-secret-key', (err, decoded) => {
+    if (err) {
+      return res.status(403).json({ message: 'Invalid or expired token' });
+    }
+    req.user = decoded; // Decoded payload (e.g., { username })
+    next();
+  });
+};
+
+// Apply middleware to the endpoint
+app.post('/api/addSiteCheck', verifyToken, async (req, res) => {
   const { url, checkResult, validUntil } = req.body;
+  const userId = req.user.username; // Use token's username, ignore body userId
 
   try {
     const newCheck = new SiteCheck({
       url,
       checkResult,
-      validUntil: validUntil ? new Date(validUntil) : null, // Convert validUntil to Date
+      validUntil: validUntil ? new Date(validUntil) : null,
       date: new Date(),
-      userId: userId
+      userId,
     });
 
-    await newCheck.save();  // Save the site check to MongoDB
+    await newCheck.save();
     res.status(201).json({ message: 'Site check saved successfully' });
   } catch (error) {
     console.error(error);
@@ -62,14 +109,17 @@ app.post('/api/addSiteCheck', async (req, res) => {
   }
 });
 
-// API to get all site checks for the dashboard
-app.get('/api/getAllSiteChecks', async (req, res) => {
 
-  const userId = req.query.userId;
+
+
+
+// API to get all site checks for the dashboard
+app.get('/api/getAllSiteChecks', verifyToken, async (req, res) => {
+  const userId = req.user.username; // Extracted from the token
 
   try {
-    const checks = await SiteCheck.find().sort({ date: -1 });  // Sort by date in descending order
-    
+    const checks = await SiteCheck.find({ userId }).sort({ date: -1 }); // Filter by userId
+
     // Combine SSL status and validUntil date
     checks.forEach(check => {
       if (check.checkResult.ssl === "Valid") {
@@ -78,35 +128,14 @@ app.get('/api/getAllSiteChecks', async (req, res) => {
         check.checkResult.ssl = "Invalid";
       }
     });
-    
-    res.status(200).json(checks);  // Send all site check data to the frontend
+
+    res.status(200).json(checks); // Send user-specific site checks
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error retrieving site checks' });
   }
 });
 
-
-app.post('/refresh-token', async (req, res) => {
-  const { refreshToken } = req.body;
-
-  if (!refreshToken) {
-    return res.status(401).json({ message: 'Refresh token required' });
-  }
-
-  try {
-    // Verify the refresh token (this is where the backend checks if the refresh token is valid)
-    const decoded = jwt.verify(refreshToken, 'your-refresh-token-secret');
-
-    // Create a new JWT token
-    const newToken = jwt.sign({ userId: decoded.userId }, 'your-secret-key', { expiresIn: '1h' });
-
-    res.status(200).json({ token: newToken });
-  } catch (error) {
-    console.error('Error refreshing token:', error);
-    res.status(403).json({ message: 'Invalid refresh token' });
-  }
-});
 
 
 // Register Route
@@ -124,6 +153,8 @@ app.post('/register', async (req, res) => {
   res.status(201).json({ message: 'User registered successfully' });
 });
 
+
+
 // Login Route
 app.post('/login', async (req, res) => {
   const { username, password } = req.body;
@@ -139,12 +170,22 @@ app.post('/login', async (req, res) => {
   }
 
   const token = jwt.sign({ username: user.username }, 'your-secret-key', { expiresIn: '1h' });
-  res.status(200).json({ message: 'Login successful', token });
+  //res.status(200).json({ message: 'Login successful', token });
+  res.status(200).json({ 
+    message: 'Login successful',
+    token: token,
+    userId: user.username // Send the username as userId
+  });
 });
 
 // Serve the homepage
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+
+app.get('download', verifyToken, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'download.html'));
 });
 
 // Start the server on port 3000

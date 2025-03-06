@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Download Safe Browsing Extension</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f9f9f9;
+    }
+    h1 { 
+      color: #333; 
+    }
+    .download-btn {
+      padding: 15px 30px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    .download-btn:hover { 
+      background-color: #0056b3; 
+    }
+    p {
+      max-width: 600px;
+      text-align: center;
+      color: #666;
+    }
+    .nav-btn {
+      padding: 10px 20px;
+      background-color: #43ca25; /* Red for logout, matches common UX */
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 10px 0;
+    }
+    .nav-btn:hover {
+      background-color: #43ca25;
+    }
+    .nav-link {
+      margin: 10px 0;
+      color: #ffffff;
+      text-decoration: none;
+    }
+    .nav-link:hover {
+      background-color: #36a21e;
+    }
+  </style>
+</head>
+<body>
+  <h1>Download Securo Extension</h1>
+  <p>
+    Click below to download the extension. After downloading, unzip the file, open Chrome, 
+    go to <code>chrome://extensions/</code>, enable "Developer mode," click "Load unpacked," 
+    and select the unzipped folder to install.
+  </p>
+  <a href="/securo-extension.zip" download="securo-extension.zip">
+    <button class="download-btn">Download Extension</button>
+  </a>
+  
+  <a href="/dashboard.html" class="nav-link nav-btn">Back to Dashboard</a>
+  <script>
+    
+  </script>
+</body>
+</html>

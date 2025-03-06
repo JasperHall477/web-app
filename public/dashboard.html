@@ -1,10 +1,24 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard</title>
   <link rel="stylesheet" href="styles.css">
+  <style>
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { cursor: pointer; background-color: #f2f2f2; }
+    th.asc::after { content: ' ↑'; }
+    th:not(.asc)::after { content: ' ↓'; }
+    #chartContainer { width: 300px; height: 300px; margin: 20px auto; }
+    .nav-link {
+      margin: 10px 0;
+      color: #007bff;
+      text-decoration: none;
+    }
+    .nav-link:hover {
+      text-decoration: underline;
+    }
+  </style>
 </head>
 <body>
   <nav>
@@ -13,29 +27,35 @@
       <li><a href="login.html">Login</a></li>
       <li><a href="register.html">Register</a></li>
       <li><a href="dashboard.html">Dashboard</a></li>
+      <li><a href="download.html">Download</a></li>
     </ul>
   </nav>
 
-  <div id="dashboardContent">
-    <h1>Welcome to your Dashboard!</h1>
+  <div id="dashboardContent"></div>
+<h1>Welcome to your Dashboard, <span id="usernameDisplay"></span>!</h1>
     <h2>Your Site Checks</h2>
-    <!-- Button to log out -->
-    <button onclick="logout()">Logout</button>
+  <button onclick="logout()">Logout</button>
+  <input type="text" id="searchInput" placeholder="Search by URL">
 
-    <table id="siteCheckTable">
-      <thead>
-        <tr>
-          <th>URL</th>
-          <th>Phishing Status</th>
-          <th>SSL Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- Dynamically filled rows go here -->
-      </tbody>
-    </table>
+
+
+  <div id="chartContainer">
+    <canvas id="phishingChart"></canvas>
   </div>
 
+  <table id="siteCheckTable">
+    <thead>
+      <tr>
+        <th>URL</th>
+        <th>Phishing Status</th>
+        <th>SSL Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="dashboard.js"></script>
 </body>
 </html>

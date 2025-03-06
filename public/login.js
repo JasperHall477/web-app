@@ -1,33 +1,30 @@
-document.getElementById('loginForm').addEventListener('submit', function (event) {
-  event.preventDefault();  // Prevent form from submitting the default way
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
 
   const username = document.getElementById('username').value;
   const password = document.getElementById('password').value;
 
-  // Send login data to the server
-  fetch('https://web-app-j994.onrender.com/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password })
-  })
-    .then(response => response.json())
-    .then(data => {
-      if (data.token) {
-        alert('Login Successful!');
-        
-        // Store the token in both localStorage and chrome.storage
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('userId', data.userId);  // Store userId
-        // chrome.storage.local.set({ token: data.token, userId: data.userId }, function () {
-        //   console.log("User logged in and data saved in chrome.storage.");
-        // });
-
-        window.location.href = 'dashboard.html';  // Redirect to dashboard
-      } else {
-        alert(data.message);
-      }
-    })
-    .catch(error => {
-      console.error('Error:', error);
+  try {
+    const response = await fetch('/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
     });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      // Save to localStorage for the web app
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('userId', data.userId);
+
+      //alert(data.message); // "Login successful"
+      window.location.href = '/dashboard.html'; // Redirect to dashboard
+    } else {
+      alert(data.message); // "Invalid username or password"
+    }
+  } catch (error) {
+    console.error('Login error:', error);
+    alert('An error occurred during login');
+  }
 });
