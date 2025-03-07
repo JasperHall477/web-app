@@ -9,22 +9,25 @@ const cors = require('cors');
 const app = express();
 
 const allowedOrigins = [
-  'https://web-app-lemon-chi.vercel.app', // Your Vercel frontend
-  'chrome-extension://fplldpkhjnlgmdogiijgoplgbbbjhfmh', // Your Chrome extension
+  'https://web-app-lemon-chi.vercel.app', //  Vercel frontend
   // Add 'http://localhost:3000' for local testing if needed
 ];
 
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
+    console.log('Request origin:', origin);
+    // Allow web app origin or any chrome-extension:// origin
+    if (!origin || allowedOrigins.includes(origin) || origin.startsWith('chrome-extension://')) {
+      console.log('Origin allowed:', origin);
       callback(null, origin || '*');
     } else {
+      console.log('Origin rejected:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },
   methods: ['GET', 'POST', 'OPTIONS'],
-  credentials: true // Optional, for cookies or auth headers
+  credentials: true
 }));
 
 //app.use(express.json());
@@ -228,12 +231,14 @@ app.post('/register', async (req, res) => {
 app.post('/login', async (req, res) => {
   console.log('Entering /login route');
   const { username, password } = req.body;
-
-  if (!req.body || !username || !password) {
-    console.log('Invalid request body:', req.body);
+  if (!req.body || typeof req.body !== 'object') {
+    console.log('No valid JSON body received');
+    return res.status(400).json({ message: 'Invalid request body - JSON required' });
+  }
+  if (!username || !password) {
+    console.log('Missing username or password:', req.body);
     return res.status(400).json({ message: 'Username and password are required' });
   }
-
   try {
     console.log('Querying user:', username);
     const user = await User.findOne({ username });
@@ -241,14 +246,12 @@ app.post('/login', async (req, res) => {
       console.log('User not found:', username);
       return res.status(400).json({ message: 'Invalid username or password' });
     }
-
     console.log('Comparing password for:', username);
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       console.log('Password mismatch for:', username);
       return res.status(400).json({ message: 'Invalid username or password' });
     }
-
     console.log('Generating token for:', username);
     const token = jwt.sign({ username: user.username }, 'your-secret-key', { expiresIn: '1h' });
     console.log('Login successful for:', username);
