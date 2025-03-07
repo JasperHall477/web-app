@@ -15,14 +15,10 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     const data = await response.json();
 
     if (response.ok) {
-      // Save to localStorage for the web app
       localStorage.setItem('token', data.token);
       localStorage.setItem('userId', data.userId);
-
       console.log('Token and userId saved in localStorage:', data.token, data.userId);
-
-      //alert(data.message); // "Login successful"
-      window.location.href = '/dashboard.html'; // Redirect to dashboard
+      window.location.href = '/dashboard.html';
     } else {
       alert(data.message); // "Invalid username or password"
     }
