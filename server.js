@@ -27,8 +27,14 @@ app.use(cors({
   credentials: true // Optional, for cookies or auth headers
 }));
 
-app.use(express.json());
+//app.use(express.json());
+app.use(express.json({ type: 'application/json' }));
 app.use(express.static(path.join(__dirname, 'public')));
+
+app.use((req, res, next) => {
+  console.log(`[${req.method}] ${req.path} - Body:`, req.body);
+  next();
+});
 
 // MongoDB connection
 mongoose.connect('mongodb+srv://SecuroUserLogin:bEqmNId6xb1f7P4G@securoproject.wwiq1.mongodb.net/?retryWrites=true&w=majority&appName=SecuroProject', { useNewUrlParser: true, useUnifiedTopology: true })
@@ -171,29 +177,27 @@ app.post('/register', async (req, res) => {
 
 
 // Login Route
-app.post('/login', async (req, res) => {
-  const { username, password } = req.body;
-  const user = await User.findOne({ username });
+// app.post('/login', async (req, res) => {
+//   const { username, password } = req.body;
+//   const user = await User.findOne({ username });
 
-  if (!user) {
-    return res.status(400).json({ message: 'Invalid username or password' });
-  }
+//   if (!user) {
+//     return res.status(400).json({ message: 'Invalid username or password' });
+//   }
 
-  const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) {
-    return res.status(400).json({ message: 'Invalid username or password' });
-  }
+//   const isMatch = await bcrypt.compare(password, user.password);
+//   if (!isMatch) {
+//     return res.status(400).json({ message: 'Invalid username or password' });
+//   }
 
-  const token = jwt.sign({ username: user.username }, 'your-secret-key', { expiresIn: '1h' });
-  //res.status(200).json({ message: 'Login successful', token });
-  res.status(200).json({ 
-    message: 'Login successful',
-    token: token,
-    userId: user.username // Send the username as userId
-  });
-});
-
-
+//   const token = jwt.sign({ username: user.username }, 'your-secret-key', { expiresIn: '1h' });
+//   //res.status(200).json({ message: 'Login successful', token });
+//   res.status(200).json({ 
+//     message: 'Login successful',
+//     token: token,
+//     userId: user.username // Send the username as userId
+//   });
+// });
 //TRY 2
 // app.post('/login', async (req, res) => {
 //   const { username, password } = req.body;
@@ -221,7 +225,48 @@ app.post('/login', async (req, res) => {
 //   }
 // });
 
+app.post('/login', async (req, res) => {
+  console.log('Entering /login route');
+  const { username, password } = req.body;
 
+  if (!req.body || !username || !password) {
+    console.log('Invalid request body:', req.body);
+    return res.status(400).json({ message: 'Username and password are required' });
+  }
+
+  try {
+    console.log('Querying user:', username);
+    const user = await User.findOne({ username });
+    if (!user) {
+      console.log('User not found:', username);
+      return res.status(400).json({ message: 'Invalid username or password' });
+    }
+
+    console.log('Comparing password for:', username);
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      console.log('Password mismatch for:', username);
+      return res.status(400).json({ message: 'Invalid username or password' });
+    }
+
+    console.log('Generating token for:', username);
+    const token = jwt.sign({ username: user.username }, 'your-secret-key', { expiresIn: '1h' });
+    console.log('Login successful for:', username);
+    res.status(200).json({
+      message: 'Login successful',
+      token,
+      userId: user.username
+    });
+  } catch (error) {
+    console.error('Login error:', error.stack);
+    res.status(500).json({ message: 'Error logging in', error: error.message });
+  }
+});
+
+app.use((err, req, res, next) => {
+  console.error('Global error:', err.stack);
+  res.status(500).json({ message: 'Internal server error', error: err.message });
+});
 
 // Serve the homepage
 app.get('/', (req, res) => {
