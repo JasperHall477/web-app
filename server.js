@@ -27,7 +27,7 @@ app.use(cors({
   credentials: true // Optional, for cookies or auth headers
 }));
 
-app.use(bodyParser.json());
+app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // MongoDB connection
@@ -225,6 +225,10 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+
+app.get('/test', (req, res) => {
+  res.status(200).json({ message: 'Server is alive' });
+});
 
 app.get('download', verifyToken, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'download.html'));
