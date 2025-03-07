@@ -9,7 +9,8 @@ const cors = require('cors');
 const app = express();
 
 const allowedOrigins = [
-  'https://web-app-lemon-chi.vercel.app', //  Vercel frontend
+  'https://web-app-lemon-chi.vercel.app',
+  'https://web-app-j994.onrender.com',
   // Add 'http://localhost:3000' for local testing if needed
 ];
 
