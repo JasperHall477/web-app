@@ -192,32 +192,68 @@ app.post('/register', async (req, res) => {
 //     userId: user.username // Send the username as userId
 //   });
 // });
+
+
+//TRY 2
+// app.post('/login', async (req, res) => {
+//   const { username, password } = req.body;
+
+//   try {
+//     const user = await User.findOne({ username });
+//     if (!user) {
+//       return res.status(400).json({ message: 'Invalid username or password' });
+//     }
+
+//     const isMatch = await bcrypt.compare(password, user.password);
+//     if (!isMatch) {
+//       return res.status(400).json({ message: 'Invalid username or password' });
+//     }
+
+//     const token = jwt.sign({ username: user.username }, 'your-secret-key', { expiresIn: '1h' });
+//     res.status(200).json({
+//       message: 'Login successful',
+//       token,
+//       userId: user.username
+//     });
+//   } catch (error) {
+//     console.error('Login error:', error);
+//     res.status(500).json({ message: 'Error logging in', error: error.message });
+//   }
+// });
 app.post('/login', async (req, res) => {
+  console.log('Received /login request:', req.body); // Debug log
   const { username, password } = req.body;
+
+  if (!username || !password) {
+    console.log('Missing username or password');
+    return res.status(400).json({ message: 'Username and password are required' });
+  }
 
   try {
     const user = await User.findOne({ username });
     if (!user) {
+      console.log('User not found:', username);
       return res.status(400).json({ message: 'Invalid username or password' });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
+      console.log('Password mismatch for:', username);
       return res.status(400).json({ message: 'Invalid username or password' });
     }
 
     const token = jwt.sign({ username: user.username }, 'your-secret-key', { expiresIn: '1h' });
+    console.log('Login successful for:', username);
     res.status(200).json({
       message: 'Login successful',
       token,
       userId: user.username
     });
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('Login error:', error.stack); // Full stack trace
     res.status(500).json({ message: 'Error logging in', error: error.message });
   }
 });
-
 
 
 // Serve the homepage
