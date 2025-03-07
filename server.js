@@ -27,7 +27,7 @@ app.use(cors({
   credentials: true // Optional, for cookies or auth headers
 }));
 
-app.use(express.json());
+app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // MongoDB connection
