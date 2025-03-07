@@ -1,6 +1,9 @@
 const token = localStorage.getItem('token');
 const userId = localStorage.getItem('userId');
 
+console.log("Token: ", token);
+console.log("UserID: ", userId);
+
 if (!token) {
   window.location.href = 'login.html';
 } else if (typeof chrome !== 'undefined' && chrome.storage) {
