@@ -19,6 +19,8 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
       localStorage.setItem('token', data.token);
       localStorage.setItem('userId', data.userId);
 
+      console.log('Token and userId saved in localStorage:', data.token, data.userId);
+
       //alert(data.message); // "Login successful"
       window.location.href = '/dashboard.html'; // Redirect to dashboard
     } else {
