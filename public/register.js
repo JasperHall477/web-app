@@ -17,6 +17,7 @@ document.getElementById('registerForm').addEventListener('submit', function (eve
       console.log(data);  // Log response from server
       if (data.message === 'User registered successfully') {
         alert('Registration Successful!');
+        window.location.href = '/login.html';
       } else {
         alert(data.message);
       }
