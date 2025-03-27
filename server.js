@@ -5,12 +5,14 @@ const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const path = require('path');
 const cors = require('cors');
+const axios = require('axios');
 
 const app = express();
 
 const allowedOrigins = [
   'https://web-app-lemon-chi.vercel.app',
   'https://web-app-j994.onrender.com',
+  'https://url-safety-server.onrender.com',
   // Add 'http://localhost:3000' for local testing if needed
 ];
 
@@ -89,6 +91,35 @@ const verifyToken = (req, res, next) => {
     next();
   });
 };
+
+// URL Safety Prediction (from ML backend)
+const predictUrlSafety = async (url) => {
+  try {
+    const flaskUrl = process.env.FLASK_URL || 'http://localhost:5000/predict'; // Use env var for Render
+    const response = await axios.post(flaskUrl, { url });
+    return response.data.phishing; // 'Safe' or 'Unsafe'
+  } catch (error) {
+    console.error('Prediction API error:', error.response ? error.response.data : error.message);
+    throw new Error('Prediction failed');
+  }
+};
+
+// Check URL endpoint
+app.post('/api/check-url', async (req, res) => {
+  const { url } = req.body;
+  if (!url) return res.status(400).json({ error: 'URL is required' });
+  try {
+    const phishingStatus = await predictUrlSafety(url);
+    res.json({ isSafe: phishingStatus === 'Safe' });
+  } catch (error) {
+    res.status(500).json({ error: 'Prediction failed', details: error.message });
+  }
+});
+
+// Serve checkURL page
+app.get('/checkURL', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'checkURL.html'));
+});
 
 // Apply middleware to the endpoint
 app.post('/api/addSiteCheck', verifyToken, async (req, res) => {
@@ -284,6 +315,12 @@ app.get('/test', (req, res) => {
 
 app.get('download', verifyToken, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'download.html'));
+});
+
+// Error handler
+app.use((err, req, res, next) => {
+  console.error('Global error:', err.stack);
+  res.status(500).json({ message: 'Internal server error', error: err.message });
 });
 
 // Start the server on port 3000

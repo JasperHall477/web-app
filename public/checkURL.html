@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>URL Safety Checker</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+    input { padding: 10px; width: 300px; }
+    button { padding: 10px 20px; margin-left: 10px; }
+    #result { margin-top: 20px; font-size: 18px; }
+  </style>
+</head>
+<body>
+  <h1>Check URL Safety</h1>
+  <input id="url" type="text" placeholder="Enter URL (e.g., http://google.com)">
+  <button onclick="checkUrl()">Check</button>
+  <p id="result"></p>
+
+  <script>
+    async function checkUrl() {
+      const url = document.getElementById('url').value;
+      if (!url) {
+        document.getElementById('result').innerText = 'Please enter a URL';
+        return;
+      }
+      try {
+        const response = await fetch('/api/check-url', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url })
+        });
+        const data = await response.json();
+        if (data.error) {
+          document.getElementById('result').innerText = `Error: ${data.error}`;
+        } else {
+          document.getElementById('result').innerText = data.isSafe ? 'Safe' : 'Unsafe';
+        }
+      } catch (error) {
+        document.getElementById('result').innerText = 'Error checking URL';
+      }
+    }
+  </script>
+</body>
+</html>
