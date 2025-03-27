@@ -104,14 +104,27 @@ const predictUrlSafety = async (url) => {
   }
 };
 
-// Check URL endpoint
 app.post('/api/check-url', async (req, res) => {
-  const { url } = req.body;
+  let { url } = req.body;
   if (!url) return res.status(400).json({ error: 'URL is required' });
+
+  // Clean URL: remove trailing backslashes or escape characters
+  url = url.replace(/\\/g, '').trim();
+  console.log(`Cleaned URL for prediction: ${url}`);
+
   try {
-    const phishingStatus = await predictUrlSafety(url);
-    res.json({ isSafe: phishingStatus === 'Safe' });
+    const response = await axios.post('https://url-safety-server.onrender.com/api/check-url', { url }, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+    console.log('Prediction response:', response.data);
+    res.json(response.data); // { isSafe: true/false }
   } catch (error) {
+    console.error('URL check error:', {
+      message: error.message,
+      response: error.response ? error.response.data : null,
+      status: error.response ? error.response.status : null,
+      code: error.code
+    });
     res.status(500).json({ error: 'Prediction failed', details: error.message });
   }
 });
