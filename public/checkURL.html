@@ -7,7 +7,9 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <h1>Welcome to SecuroProject</h1>
+  <header>
+    <h1>SecuroProject</h1>
+  </header>
   <nav>
     <ul>
       <li><a href="index.html">Home</a></li>
@@ -15,17 +17,21 @@
       <li><a href="register.html">Register</a></li>
       <li><a href="dashboard.html">Dashboard</a></li>
       <li><a href="checkURL.html">Check a URL</a></li>
+      <li><a href="download.html">Download</a></li>
     </ul>
   </nav>
-
-  <h2>Check URL Safety</h2>
-  <input id="url" type="text" placeholder="Enter URL (e.g., http://google.com)">
-  <button onclick="checkUrl()">Check</button>
-  <p id="result"></p>
-
+  <main>
+    <h2>Check URL Safety</h2>
+    <p>Enter a URL below to check if it’s safe using our machine learning system.</p>
+    <div class="check-url">
+      <input id="url" type="text" placeholder="e.g., http://google.com">
+      <button onclick="checkUrl()">Check</button>
+      <p id="result"></p>
+    </div>
+  </main>
   <script>
     async function checkUrl() {
-      const url = document.getElementById('url').value;
+      const url = document.getElementById('url').value.trim();
       const resultElement = document.getElementById('result');
       if (!url) {
         resultElement.innerText = 'Please enter a URL';
@@ -43,6 +49,7 @@
           resultElement.innerText = `Error: ${data.error}`;
         } else {
           resultElement.innerText = data.isSafe ? 'Safe' : 'Unsafe';
+          resultElement.style.color = data.isSafe ? '#28a745' : '#dc3545';
         }
       } catch (error) {
         resultElement.innerText = 'Error checking URL';

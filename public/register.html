@@ -3,11 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Register</title>
+  <title>Register - SecuroProject</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <h1>Register</h1>
+  <header>
+    <h1>SecuroProject</h1>
+  </header>
   <nav>
     <ul>
       <li><a href="index.html">Home</a></li>
@@ -15,19 +17,20 @@
       <li><a href="register.html">Register</a></li>
       <li><a href="dashboard.html">Dashboard</a></li>
       <li><a href="checkURL.html">Check a URL</a></li>
+      <li><a href="download.html">Download</a></li>
     </ul>
   </nav>
-
-  <form id="registerForm">
-    <label for="username">Username:</label>
-    <input type="text" id="username" name="username" required><br><br>
-
-    <label for="password">Password:</label>
-    <input type="password" id="password" name="password" required><br><br>
-
-    <button type="submit">Register</button>
-  </form>
-
+  <main>
+    <h2>Register</h2>
+    <form id="registerForm">
+      <label for="username">Username:</label>
+      <input type="text" id="username" name="username" required>
+      <label for="password">Password:</label>
+      <input type="password" id="password" name="password" required>
+      <button type="submit">Register</button>
+    </form>
+    <p>Already have an account? <a href="login.html">Log in</a>.</p>
+  </main>
   <script src="register.js"></script>
 </body>
 </html>
