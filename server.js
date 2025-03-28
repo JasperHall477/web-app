@@ -13,7 +13,7 @@ const allowedOrigins = [
   'https://web-app-lemon-chi.vercel.app',
   'https://web-app-j994.onrender.com',
   'https://url-safety-server.onrender.com',
-  // Add 'http://localhost:3000' for local testing if needed
+  'http://localhost:3000',
 ];
 
 
@@ -64,6 +64,7 @@ const siteCheckSchema = new mongoose.Schema({
   checkResult: {
     phishing: { type: String, required: true },
     ssl: { type: String, required: true },
+    mlPrediction: { type: String, required: true }
   },
   validUntil: { type: Date, required: false },  // New field for SSL valid until date
   date: { type: Date, default: Date.now },  // Automatically set the current date
@@ -90,18 +91,6 @@ const verifyToken = (req, res, next) => {
     req.user = decoded; // Decoded payload (e.g., { username })
     next();
   });
-};
-
-// URL Safety Prediction (from ML backend)
-const predictUrlSafety = async (url) => {
-  try {
-    const flaskUrl = process.env.FLASK_URL || 'http://localhost:5000/predict'; // Use env var for Render
-    const response = await axios.post(flaskUrl, { url });
-    return response.data.phishing; // 'Safe' or 'Unsafe'
-  } catch (error) {
-    console.error('Prediction API error:', error.response ? error.response.data : error.message);
-    throw new Error('Prediction failed');
-  }
 };
 
 app.post('/api/check-url', async (req, res) => {
@@ -142,7 +131,11 @@ app.post('/api/addSiteCheck', verifyToken, async (req, res) => {
   try {
     const newCheck = new SiteCheck({
       url,
-      checkResult,
+      checkResult: {
+        phishing: checkResult.phishing,
+        ssl: checkResult.ssl,
+        mlPrediction: checkResult.mlPrediction // Store ML result
+      },
       validUntil: validUntil ? new Date(validUntil) : null,
       date: new Date(),
       userId,

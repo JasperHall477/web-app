@@ -55,7 +55,7 @@ fetch('https://web-app-j994.onrender.com/api/getAllSiteChecks', {
     const table = document.getElementById('siteCheckTable').getElementsByTagName('tbody')[0];
     const row = table.insertRow();
     row.insertCell().textContent = 'Error loading scans.';
-    row.cells[0].colSpan = 4;
+    row.cells[0].colSpan = 5;
   });
 
 function renderTable(data) {
@@ -65,7 +65,7 @@ function renderTable(data) {
   if (data.length === 0) {
     const row = table.insertRow();
     row.insertCell().textContent = 'No scans yet.';
-    row.cells[0].colSpan = 4;
+    row.cells[0].colSpan = 5;
     return;
   }
 
@@ -78,6 +78,9 @@ function renderTable(data) {
     const sslCell = row.insertCell();
     sslCell.textContent = item.checkResult.ssl;
     sslCell.style.color = item.checkResult.ssl.startsWith('Valid') ? 'green' : 'red';
+    const mlCell = row.insertCell(); // New ML column
+    mlCell.textContent = item.checkResult.mlPrediction || 'N/A'; // Fallback if missing
+    mlCell.style.color = item.checkResult.mlPrediction === 'Unsafe' ? 'red' : 'green';
     const detailsCell = row.insertCell();
     const detailsBtn = document.createElement('button');
     detailsBtn.textContent = 'Details';
@@ -91,6 +94,7 @@ function showDetails(item) {
     URL: ${item.url}
     Phishing: ${item.checkResult.phishing}
     SSL: ${item.checkResult.ssl}
+    ML Prediction: ${item.checkResult.mlPrediction || 'N/A'}
     Scanned On: ${new Date(item.date).toLocaleString()}
     ${item.validUntil ? `SSL Valid Until: ${new Date(item.validUntil).toLocaleString()}` : ''}
   `;
@@ -106,9 +110,12 @@ document.getElementById('siteCheckTable').querySelectorAll('th').forEach((header
 
 function sortTable(column, asc = true) {
   const sorted = [...allScans].sort((a, b) => {
-    const valuesA = [a.url, a.checkResult.phishing, a.checkResult.ssl];
+    const valuesA = [a.url, a.checkResult.phishing, a.checkResult.ssl, a.checkResult.mlPrediction || 'N/A'];
     const valueA = valuesA[column];
-    const valueB = column === 0 ? b.url : column === 1 ? b.checkResult.phishing : b.checkResult.ssl;
+    const valueB = column === 0 ? b.url : 
+                   column === 1 ? b.checkResult.phishing : 
+                   column === 2 ? b.checkResult.ssl : 
+                   b.checkResult.mlPrediction || 'N/A';
     return asc ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA);
   });
   renderTable(sorted);
@@ -125,32 +132,35 @@ document.getElementById('searchInput')?.addEventListener('input', (e) => {
 function renderChart(data) {
   const ctx = document.getElementById('phishingChart').getContext('2d');
   const totalSites = data.length;
-  const safeSites = data.filter(scan => scan.checkResult.phishing === 'Safe').length;
-  const unsafeSites = data.filter(scan => scan.checkResult.phishing === 'Unsafe').length;
+  const safePhishing = data.filter(scan => scan.checkResult.phishing === 'Safe').length;
+  const unsafePhishing = data.filter(scan => scan.checkResult.phishing === 'Unsafe').length;
+  const validSSL = data.filter(scan => scan.checkResult.ssl.startsWith('Valid')).length;
+  const invalidSSL = data.filter(scan => !scan.checkResult.ssl.startsWith('Valid')).length;
+  const safeML = data.filter(scan => scan.checkResult.mlPrediction === 'Safe').length;
+  const unsafeML = data.filter(scan => scan.checkResult.mlPrediction === 'Unsafe').length;
 
-  // Destroy previous chart instance if it exists
   if (chartInstance) {
     chartInstance.destroy();
   }
 
   chartInstance = new Chart(ctx, {
-    type: 'pie', // Can switch to 'pie' or 'doughnut' if preferred
+    type: 'pie',
     data: {
-      labels: ['Safe', 'Unsafe'],
+      labels: ['Safe (Phishing)', 'Unsafe (Phishing)', 'Valid (SSL)', 'Invalid (SSL)', 'Safe (ML)', 'Unsafe (ML)'],
       datasets: [{
-        label: 'Phishing Status',
-        data: [safeSites, unsafeSites],
-        backgroundColor: ['#4CAF50', '#FF6384'], // Green for Safe, Red for Unsafe
-        borderColor: ['#4CAF50', '#FF6384'],
+        label: 'Site Check Results',
+        data: [safePhishing, unsafePhishing, validSSL, invalidSSL, safeML, unsafeML],
+        backgroundColor: ['#4CAF50', '#FF6384', '#4CAF50', '#FF6384', '#4CAF50', '#FF6384'],
+        borderColor: ['#4CAF50', '#FF6384', '#4CAF50', '#FF6384', '#4CAF50', '#FF6384'],
         borderWidth: 1
       }]
     },
     options: {
       responsive: true,
-      maintainAspectRatio: false, // Allows custom size
+      maintainAspectRatio: false,
       plugins: {
-        legend: { display: true, position: 'top' }, // Show legend
-        title: { display: true, text: 'Safe vs Unsafe Sites' }
+        legend: { display: true, position: 'top' },
+        title: { display: true, text: 'Site Check Overview' }
       }
     }
   });
