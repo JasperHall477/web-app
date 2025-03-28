@@ -23,6 +23,14 @@ function logout() {
 
 let allScans = [];
 let chartInstance = null; // Store chart instance to update it
+let visibleSegments = {
+  'Safe (Phishing)': true,
+  'Unsafe (Phishing)': true,
+  'Valid (SSL)': true,
+  'Invalid (SSL)': true,
+  'Safe (ML)': true,
+  'Unsafe (ML)': true
+};
 
 //fetch('http://localhost:3000/api/getAllSiteChecks', {
 fetch('https://web-app-j994.onrender.com/api/getAllSiteChecks', {
@@ -57,6 +65,18 @@ fetch('https://web-app-j994.onrender.com/api/getAllSiteChecks', {
     row.insertCell().textContent = 'Error loading scans.';
     row.cells[0].colSpan = 5;
   });
+
+  function filterScans() {
+    return allScans.filter(scan => {
+      const phishingMatch = (visibleSegments['Safe (Phishing)'] && scan.checkResult.phishing === 'Safe') ||
+                           (visibleSegments['Unsafe (Phishing)'] && scan.checkResult.phishing === 'Unsafe');
+      const sslMatch = (visibleSegments['Valid (SSL)'] && scan.checkResult.ssl.startsWith('Valid')) ||
+                       (visibleSegments['Invalid (SSL)'] && !scan.checkResult.ssl.startsWith('Valid'));
+      const mlMatch = (visibleSegments['Safe (ML)'] && scan.checkResult.mlPrediction === 'Safe') ||
+                      (visibleSegments['Unsafe (ML)'] && scan.checkResult.mlPrediction === 'Unsafe');
+      return phishingMatch && sslMatch && mlMatch;
+    });
+  }
 
 function renderTable(data) {
   const table = document.getElementById('siteCheckTable').getElementsByTagName('tbody')[0];
@@ -159,7 +179,20 @@ function renderChart(data) {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { display: true, position: 'top' },
+        legend: {
+          display: true,
+          position: 'top',
+          onClick: (e, legendItem) => {
+            const index = legendItem.index;
+            const label = chartInstance.data.labels[index];
+            visibleSegments[label] = !visibleSegments[label]; // Toggle visibility
+            chartInstance.toggleDataVisibility(index);
+            chartInstance.update();
+
+            const filtered = filterScans();
+            renderTable(filtered);
+          }
+        },
         title: { display: true, text: 'Site Check Overview' }
       }
     }
