@@ -12,7 +12,6 @@ if (!token) {
   });
 }
 
-//document.getElementById('usernameDisplay').textContent = userId || 'User';
 document.getElementById('usernameDisplay').textContent = (userId || 'User').replace(/^\w/, c => c.toUpperCase());
 
 function logout() {
@@ -22,7 +21,7 @@ function logout() {
 }
 
 let allScans = [];
-let chartInstance = null; // Store chart instance to update it
+let chartInstance = null;
 let visibleSegments = {
   'Safe (Phishing)': true,
   'Unsafe (Phishing)': true,
@@ -32,9 +31,7 @@ let visibleSegments = {
   'Unsafe (ML)': true
 };
 
-//fetch('http://localhost:3000/api/getAllSiteChecks', {
 fetch('https://web-app-j994.onrender.com/api/getAllSiteChecks', {
-  
   method: 'GET',
   headers: {
     'Authorization': `Bearer ${token}`,
@@ -56,7 +53,8 @@ fetch('https://web-app-j994.onrender.com/api/getAllSiteChecks', {
   .then(data => {
     allScans = data;
     renderTable(allScans);
-    renderChart(allScans); // Render chart after fetch
+    renderChart(allScans);
+    initColumnResize(); // Initialize resize after table is rendered
   })
   .catch(error => {
     console.error('Error fetching site checks:', error);
@@ -66,17 +64,17 @@ fetch('https://web-app-j994.onrender.com/api/getAllSiteChecks', {
     row.cells[0].colSpan = 5;
   });
 
-  function filterScans() {
-    return allScans.filter(scan => {
-      const phishingMatch = (visibleSegments['Safe (Phishing)'] && scan.checkResult.phishing === 'Safe') ||
-                           (visibleSegments['Unsafe (Phishing)'] && scan.checkResult.phishing === 'Unsafe');
-      const sslMatch = (visibleSegments['Valid (SSL)'] && scan.checkResult.ssl.startsWith('Valid')) ||
-                       (visibleSegments['Invalid (SSL)'] && !scan.checkResult.ssl.startsWith('Valid'));
-      const mlMatch = (visibleSegments['Safe (ML)'] && scan.checkResult.mlPrediction === 'Safe') ||
-                      (visibleSegments['Unsafe (ML)'] && scan.checkResult.mlPrediction === 'Unsafe');
-      return phishingMatch && sslMatch && mlMatch;
-    });
-  }
+function filterScans() {
+  return allScans.filter(scan => {
+    const phishingMatch = (visibleSegments['Safe (Phishing)'] && scan.checkResult.phishing === 'Safe') ||
+                         (visibleSegments['Unsafe (Phishing)'] && scan.checkResult.phishing === 'Unsafe');
+    const sslMatch = (visibleSegments['Valid (SSL)'] && scan.checkResult.ssl.startsWith('Valid')) ||
+                     (visibleSegments['Invalid (SSL)'] && !scan.checkResult.ssl.startsWith('Valid'));
+    const mlMatch = (visibleSegments['Safe (ML)'] && scan.checkResult.mlPrediction === 'Safe') ||
+                    (visibleSegments['Unsafe (ML)'] && scan.checkResult.mlPrediction === 'Unsafe');
+    return phishingMatch && sslMatch && mlMatch;
+  });
+}
 
 function renderTable(data) {
   const table = document.getElementById('siteCheckTable').getElementsByTagName('tbody')[0];
@@ -84,7 +82,7 @@ function renderTable(data) {
 
   if (data.length === 0) {
     const row = table.insertRow();
-    row.insertCell().textContent = 'No scans yet.';
+    row.insertCell().textContent = 'No scans match the current filter.';
     row.cells[0].colSpan = 5;
     return;
   }
@@ -98,8 +96,8 @@ function renderTable(data) {
     const sslCell = row.insertCell();
     sslCell.textContent = item.checkResult.ssl;
     sslCell.style.color = item.checkResult.ssl.startsWith('Valid') ? 'green' : 'red';
-    const mlCell = row.insertCell(); // New ML column
-    mlCell.textContent = item.checkResult.mlPrediction || 'N/A'; // Fallback if missing
+    const mlCell = row.insertCell();
+    mlCell.textContent = item.checkResult.mlPrediction || 'N/A';
     mlCell.style.color = item.checkResult.mlPrediction === 'Unsafe' ? 'red' : 'green';
     const detailsCell = row.insertCell();
     const detailsBtn = document.createElement('button');
@@ -129,7 +127,8 @@ document.getElementById('siteCheckTable').querySelectorAll('th').forEach((header
 });
 
 function sortTable(column, asc = true) {
-  const sorted = [...allScans].sort((a, b) => {
+  const filtered = filterScans();
+  const sorted = filtered.sort((a, b) => {
     const valuesA = [a.url, a.checkResult.phishing, a.checkResult.ssl, a.checkResult.mlPrediction || 'N/A'];
     const valueA = valuesA[column];
     const valueB = column === 0 ? b.url : 
@@ -139,19 +138,18 @@ function sortTable(column, asc = true) {
     return asc ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA);
   });
   renderTable(sorted);
-  renderChart(sorted); // Update chart with sorted/filtered data
+  renderChart(sorted);
 }
 
 document.getElementById('searchInput')?.addEventListener('input', (e) => {
   const searchTerm = e.target.value.toLowerCase();
-  const filtered = allScans.filter(scan => scan.url.toLowerCase().includes(searchTerm));
+  const filtered = filterScans().filter(scan => scan.url.toLowerCase().includes(searchTerm));
   renderTable(filtered);
-  renderChart(filtered); // Update chart with filtered data
+  renderChart(filtered);
 });
 
 function renderChart(data) {
   const ctx = document.getElementById('phishingChart').getContext('2d');
-  const totalSites = data.length;
   const safePhishing = data.filter(scan => scan.checkResult.phishing === 'Safe').length;
   const unsafePhishing = data.filter(scan => scan.checkResult.phishing === 'Unsafe').length;
   const validSSL = data.filter(scan => scan.checkResult.ssl.startsWith('Valid')).length;
@@ -185,10 +183,9 @@ function renderChart(data) {
           onClick: (e, legendItem) => {
             const index = legendItem.index;
             const label = chartInstance.data.labels[index];
-            visibleSegments[label] = !visibleSegments[label]; // Toggle visibility
+            visibleSegments[label] = !visibleSegments[label];
             chartInstance.toggleDataVisibility(index);
             chartInstance.update();
-
             const filtered = filterScans();
             renderTable(filtered);
           }
@@ -197,4 +194,37 @@ function renderChart(data) {
       }
     }
   });
+}
+
+function initColumnResize() {
+  const table = document.getElementById('siteCheckTable');
+  const headers = table.querySelectorAll('th');
+  let thBeingResized = null;
+  let startX = 0;
+  let startWidth = 0;
+
+  headers.forEach((th, index) => {
+    const handle = th.querySelector('.resize-handle');
+    handle.addEventListener('mousedown', (e) => {
+      thBeingResized = th;
+      startX = e.pageX;
+      startWidth = th.offsetWidth;
+      document.addEventListener('mousemove', resizeColumn);
+      document.addEventListener('mouseup', stopResize);
+    });
+  });
+
+  function resizeColumn(e) {
+    if (!thBeingResized) return;
+    const newWidth = startWidth + (e.pageX - startX);
+    if (newWidth > 50) { // Minimum width of 50px
+      thBeingResized.style.width = `${newWidth}px`;
+    }
+  }
+
+  function stopResize() {
+    thBeingResized = null;
+    document.removeEventListener('mousemove', resizeColumn);
+    document.removeEventListener('mouseup', stopResize);
+  }
 }
