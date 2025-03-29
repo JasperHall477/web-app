@@ -54,7 +54,7 @@ fetch('https://web-app-j994.onrender.com/api/getAllSiteChecks', {
     allScans = data;
     renderTable(allScans);
     renderChart(allScans);
-    initColumnResize(); // Initialize resize after table is rendered
+    initColumnResize();
   })
   .catch(error => {
     console.error('Error fetching site checks:', error);
@@ -120,9 +120,11 @@ function showDetails(item) {
 }
 
 document.getElementById('siteCheckTable').querySelectorAll('th').forEach((header, index) => {
-  header.addEventListener('click', () => {
-    const isAscending = header.classList.toggle('asc');
-    sortTable(index, isAscending);
+  header.addEventListener('click', (e) => {
+    if (!e.target.classList.contains('resize-handle')) {
+      const isAscending = header.classList.toggle('asc');
+      sortTable(index, isAscending);
+    }
   });
 });
 
@@ -198,32 +200,44 @@ function renderChart(data) {
 
 function initColumnResize() {
   const table = document.getElementById('siteCheckTable');
-  const headers = table.querySelectorAll('th');
+  const headers = Array.from(table.querySelectorAll('th'));
   let thBeingResized = null;
+  let nextTh = null;
   let startX = 0;
-  let startWidth = 0;
+  let startWidthLeft = 0;
+  let startWidthRight = 0;
 
   headers.forEach((th, index) => {
     const handle = th.querySelector('.resize-handle');
     handle.addEventListener('mousedown', (e) => {
-      thBeingResized = th;
+      e.stopPropagation();
+      thBeingResized = th; // Left column
+      nextTh = index < headers.length - 1 ? headers[index + 1] : null; // Right column, null for last handle
+      if (!nextTh) return; // Skip if last column (no right neighbor)
       startX = e.pageX;
-      startWidth = th.offsetWidth;
+      startWidthLeft = thBeingResized.offsetWidth;
+      startWidthRight = nextTh.offsetWidth;
       document.addEventListener('mousemove', resizeColumn);
       document.addEventListener('mouseup', stopResize);
     });
   });
 
   function resizeColumn(e) {
-    if (!thBeingResized) return;
-    const newWidth = startWidth + (e.pageX - startX);
-    if (newWidth > 50) { // Minimum width of 50px
-      thBeingResized.style.width = `${newWidth}px`;
+    if (!thBeingResized || !nextTh) return;
+    const delta = e.pageX - startX;
+    const newWidthLeft = startWidthLeft + delta;
+    const newWidthRight = startWidthRight - delta;
+
+    if (newWidthLeft >= 100 && newWidthRight >= 100) { // 100px minimum for both
+      thBeingResized.style.width = `${newWidthLeft}px`;
+      nextTh.style.width = `${newWidthRight}px`;
     }
   }
 
-  function stopResize() {
+  function stopResize(e) {
+    e.stopPropagation();
     thBeingResized = null;
+    nextTh = null;
     document.removeEventListener('mousemove', resizeColumn);
     document.removeEventListener('mouseup', stopResize);
   }

@@ -93,15 +93,23 @@ button:hover {
   background-color: #0056b3;
 }
 
+
+.table-container {
+  width: 1200px; /* Fixed width on large screens */
+  margin: 2rem auto; /* Center horizontally, vertical spacing */
+  overflow-x: auto; /* Fallback scroll */
+}
+
+
 /* Dashboard Table */
 table {
-  width: 100%;
+  width: 1200px; /* Fixed width on large screens */
   border-collapse: collapse;
   background-color: white;
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-  table-layout: fixed; /* Helps with resizing */
+  table-layout: fixed;
 }
 th, td {
   padding: 1rem;
@@ -111,11 +119,17 @@ th, td {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+th:nth-child(1), td:nth-child(1) { width: 350px; } /* URL */
+th:nth-child(2), td:nth-child(2) { width: 250px; } /* Phishing Status */
+th:nth-child(3), td:nth-child(3) { width: 250px; } /* SSL Status */
+th:nth-child(4), td:nth-child(4) { width: 200px; } /* ML Prediction */
+th:nth-child(5), td:nth-child(5) { width: 150px; } /* Actions */
+th:nth-child(-n+3), td:nth-child(-n+3) { min-width: 100px; } /* Min width for resizable columns */
 th {
   background-color: #f2f2f2;
   cursor: pointer;
-  position: relative; /* For resize handle positioning */
-  user-select: none; /* Prevent text selection during drag */
+  position: relative;
+  user-select: none;
 }
 th.asc::after { content: ' ↑'; }
 th:not(.asc)::after { content: ' ↓'; }
@@ -131,7 +145,7 @@ th:not(.asc)::after { content: ' ↓'; }
   cursor: col-resize;
 }
 th:hover .resize-handle {
-  background: #007bff; /* Visible on hover */
+  background: #007bff;
 }
 
 /* Specific Styles */
@@ -140,6 +154,20 @@ th:hover .resize-handle {
 .download-btn { display: block; margin: 1rem auto; }
 
 /* Responsive Design */
+@media (max-width: 1200px) {
+  .table-container {
+    width: 100%; /* Fit to viewport */
+    margin: 2rem 0; /* Keep vertical spacing, no horizontal centering needed */
+  }
+  table {
+    width: 100%; /* Fit to container */
+  }
+  th:nth-child(1), td:nth-child(1) { width: 29.17%; } /* 350/1200 */
+  th:nth-child(2), td:nth-child(2) { width: 20.83%; } /* 250/1200 */
+  th:nth-child(3), td:nth-child(3) { width: 20.83%; } /* 250/1200 */
+  th:nth-child(4), td:nth-child(4) { width: 16.67%; } /* 200/1200 */
+  th:nth-child(5), td:nth-child(5) { width: 12.5%; } /* 150/1200 */
+}
 @media (max-width: 600px) {
   nav ul { flex-direction: column; align-items: center; }
   nav ul li { margin: 0.5rem 0; }
