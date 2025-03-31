@@ -27,23 +27,24 @@
     <input type="text" id="searchInput" placeholder="Search by URL">
     <div id="chartContainer">
       <canvas id="phishingChart"></canvas>
+      <a id="resetLink" href="#" style="display: none;">Reset Filters</a>
     </div>
     <h3>Your Site Checks</h3>
+    <div class="table-container">
+      <table id="siteCheckTable">
+        <thead>
+          <tr>
+            <th><span class="sort-text">URL</span><span class="resize-handle"></span></th>
+            <th><span class="sort-text">Phishing Status</span><span class="resize-handle"></span></th>
+            <th><span class="sort-text">SSL Status</span><span class="resize-handle"></span></th>
+            <th><span class="sort-text">ML Prediction</span></th>
+            <th style="width: 150px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
   </main>
-  <div class="table-container">
-    <table id="siteCheckTable">
-      <thead>
-        <tr>
-          <th>URL<span class="resize-handle"></span></th>
-          <th>Phishing Status<span class="resize-handle"></span></th>
-          <th>SSL Status<span class="resize-handle"></span></th>
-          <th>ML Prediction</th>
-          <th style="width: 150px;">Actions</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="dashboard.js"></script>
 </body>

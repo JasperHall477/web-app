@@ -22,6 +22,7 @@
   </nav>
   <main>
     <h2>Check URL Safety</h2>
+    <p>Securos custom machine learning model is trained on millions of URLs to be able to identify the likelihood of any given site being safe or not.</p>
     <p>Enter a URL below to check if it’s safe using our machine learning system.</p>
     <div class="check-url">
       <input id="url" type="text" placeholder="e.g., http://google.com">
@@ -30,31 +31,53 @@
     </div>
   </main>
   <script>
-    async function checkUrl() {
-      const url = document.getElementById('url').value.trim();
-      const resultElement = document.getElementById('result');
-      if (!url) {
-        resultElement.innerText = 'Please enter a URL';
-        return;
-      }
-      resultElement.innerText = 'Checking...';
-      try {
-        const response = await fetch('/api/check-url', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url })
-        });
-        const data = await response.json();
-        if (data.error) {
-          resultElement.innerText = `Error: ${data.error}`;
-        } else {
-          resultElement.innerText = data.isSafe ? 'Safe' : 'Unsafe';
-          resultElement.style.color = data.isSafe ? '#28a745' : '#dc3545';
-        }
-      } catch (error) {
-        resultElement.innerText = 'Error checking URL';
-      }
+    function isValidUrl(url) {
+    // Simple regex to check if the URL starts with http or https and has a valid domain
+    const pattern = /^(https?:\/\/)?([\w\-]+\.)+[\w\-]+(\/[\w\-._~:/?#[\]@!$&'()*+,;=]*)?$/i;
+    return pattern.test(url);
+  }
+
+  async function checkUrl() {
+    const urlInput = document.getElementById('url');
+    const url = urlInput.value.trim();
+    const resultElement = document.getElementById('result');
+
+    if (!url) {
+      resultElement.innerText = 'Please enter a URL';
+      resultElement.style.color = '#dc3545';
+      return;
     }
+
+    if (!isValidUrl(url)) {
+      resultElement.innerText = 'Please enter a valid URL (e.g., https://example.com)';
+      resultElement.style.color = '#dc3545';
+      return;
+    }
+
+    resultElement.innerText = 'Checking...';
+    resultElement.style.color = 'inherit';
+
+    try {
+      const response = await fetch('/api/check-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
+      });
+
+      const data = await response.json();
+
+      if (data.error) {
+        resultElement.innerText = `Error: ${data.error}`;
+        resultElement.style.color = '#dc3545';
+      } else {
+        resultElement.innerText = data.isSafe ? 'Likely Safe' : 'Likely Unsafe';
+        resultElement.style.color = data.isSafe ? '#28a745' : '#dc3545';
+      }
+    } catch (error) {
+      resultElement.innerText = 'Error checking URL';
+      resultElement.style.color = '#dc3545';
+    }
+  }
   </script>
 </body>
 </html>

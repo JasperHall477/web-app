@@ -1,10 +1,73 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Home - SecuroProject</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    
+
+ 
+
+    
+
+    nav ul {
+      display: flex;
+      justify-content: center;
+      list-style: none;
+      margin: 0;
+      padding: 0.5rem;
+    }
+
+    nav ul li {
+      margin: 0 1rem;
+    }
+
+    nav ul li a:hover {
+      text-decoration: underline;
+    }
+
+    main {
+      max-width: 900px;
+      margin: 3rem auto;
+      padding: 2rem;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      text-align: center;
+    }
+
+    h2 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    p {
+      font-size: 1.125rem;
+      line-height: 1.6;
+    }
+
+    .cta-buttons {
+      margin-top: 2rem;
+    }
+
+    .cta-buttons a {
+      display: inline-block;
+      margin: 0 0.5rem;
+      padding: 0.75rem 1.5rem;
+      background-color: #0d6efd;
+      color: white;
+      border-radius: 5px;
+      text-decoration: none;
+      font-weight: bold;
+      transition: background-color 0.2s ease-in-out;
+    }
+
+    .cta-buttons a:hover {
+      background-color: #0b5ed7;
+    }
+  </style>
 </head>
 <body>
   <header>
@@ -22,7 +85,14 @@
   </nav>
   <main>
     <h2>Welcome to SecuroProject</h2>
-    <p>Get started with our secure browsing tools! Log in or register to track your URL scans, check URLs for safety using our ML-powered backend, or download our Chrome extension for real-time protection.</p>
+    <p>
+      SecuroProject empowers you to browse confidently with our machine-learning-powered security tools. Whether you're checking for phishing threats, analyzing browsing patterns, or using our Chrome extension for real-time protection — we’ve got your back.
+    </p>
+    <div class="cta-buttons">
+      <a href="register.html">Get Started</a>
+      <a href="checkURL.html">Check a URL</a>
+      <a href="download.html">Download Extension</a>
+    </div>
   </main>
 </body>
 </html>

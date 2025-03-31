@@ -30,6 +30,11 @@ let visibleSegments = {
   'Safe (ML)': true,
   'Unsafe (ML)': true
 };
+let selectedSegments = new Set();
+let justReset = false;
+const baseColors = [
+  '#66BB6A', '#EF5350', '#4CAF50', '#F44336', '#81C784', '#D32F2F'
+];
 
 fetch('https://web-app-j994.onrender.com/api/getAllSiteChecks', {
   method: 'GET',
@@ -55,6 +60,8 @@ fetch('https://web-app-j994.onrender.com/api/getAllSiteChecks', {
     renderTable(allScans);
     renderChart(allScans);
     initColumnResize();
+    initColumnSort();
+    initStickyHeaders();
   })
   .catch(error => {
     console.error('Error fetching site checks:', error);
@@ -65,15 +72,28 @@ fetch('https://web-app-j994.onrender.com/api/getAllSiteChecks', {
   });
 
 function filterScans() {
-  return allScans.filter(scan => {
-    const phishingMatch = (visibleSegments['Safe (Phishing)'] && scan.checkResult.phishing === 'Safe') ||
-                         (visibleSegments['Unsafe (Phishing)'] && scan.checkResult.phishing === 'Unsafe');
-    const sslMatch = (visibleSegments['Valid (SSL)'] && scan.checkResult.ssl.startsWith('Valid')) ||
-                     (visibleSegments['Invalid (SSL)'] && !scan.checkResult.ssl.startsWith('Valid'));
-    const mlMatch = (visibleSegments['Safe (ML)'] && scan.checkResult.mlPrediction === 'Safe') ||
-                    (visibleSegments['Unsafe (ML)'] && scan.checkResult.mlPrediction === 'Unsafe');
-    return phishingMatch && sslMatch && mlMatch;
-  });
+  if (selectedSegments.size === 0) {
+    return allScans.filter(scan => {
+      const phishingMatch = (visibleSegments['Safe (Phishing)'] && scan.checkResult.phishing === 'Safe') ||
+                           (visibleSegments['Unsafe (Phishing)'] && scan.checkResult.phishing === 'Unsafe');
+      const sslMatch = (visibleSegments['Valid (SSL)'] && scan.checkResult.ssl.startsWith('Valid')) ||
+                       (visibleSegments['Invalid (SSL)'] && !scan.checkResult.ssl.startsWith('Valid'));
+      const mlMatch = (visibleSegments['Safe (ML)'] && scan.checkResult.mlPrediction === 'Safe') ||
+                      (visibleSegments['Unsafe (ML)'] && scan.checkResult.mlPrediction === 'Unsafe');
+      return phishingMatch && sslMatch && mlMatch;
+    });
+  } else {
+    return allScans.filter(scan => {
+      return (
+        (selectedSegments.has('Safe (Phishing)') && scan.checkResult.phishing === 'Safe') ||
+        (selectedSegments.has('Unsafe (Phishing)') && scan.checkResult.phishing === 'Unsafe') ||
+        (selectedSegments.has('Valid (SSL)') && scan.checkResult.ssl.startsWith('Valid')) ||
+        (selectedSegments.has('Invalid (SSL)') && !scan.checkResult.ssl.startsWith('Valid')) ||
+        (selectedSegments.has('Safe (ML)') && scan.checkResult.mlPrediction === 'Safe') ||
+        (selectedSegments.has('Unsafe (ML)') && scan.checkResult.mlPrediction === 'Unsafe')
+      );
+    });
+  }
 }
 
 function renderTable(data) {
@@ -119,15 +139,6 @@ function showDetails(item) {
   alert(details);
 }
 
-document.getElementById('siteCheckTable').querySelectorAll('th').forEach((header, index) => {
-  header.addEventListener('click', (e) => {
-    if (!e.target.classList.contains('resize-handle')) {
-      const isAscending = header.classList.toggle('asc');
-      sortTable(index, isAscending);
-    }
-  });
-});
-
 function sortTable(column, asc = true) {
   const filtered = filterScans();
   const sorted = filtered.sort((a, b) => {
@@ -143,12 +154,38 @@ function sortTable(column, asc = true) {
   renderChart(sorted);
 }
 
+function initColumnSort() {
+  document.getElementById('siteCheckTable').querySelectorAll('th .sort-text').forEach((text, index) => {
+    text.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const header = text.parentElement;
+      const isAscending = header.classList.toggle('asc');
+      sortTable(index, isAscending);
+    });
+  });
+}
+
 document.getElementById('searchInput')?.addEventListener('input', (e) => {
   const searchTerm = e.target.value.toLowerCase();
   const filtered = filterScans().filter(scan => scan.url.toLowerCase().includes(searchTerm));
   renderTable(filtered);
   renderChart(filtered);
 });
+
+function resetFilters(e) {
+  e.preventDefault();
+  selectedSegments.clear();
+  chartInstance.data.labels.forEach(label => selectedSegments.add(label));
+  justReset = true;
+  chartInstance.data.datasets[0].backgroundColor = baseColors;
+  chartInstance.data.datasets[0].data.forEach((_, i) => {
+    chartInstance.setDatasetVisibility(0, true);
+  });
+  chartInstance.update();
+  document.getElementById('resetLink').style.display = 'none';
+  const filtered = filterScans();
+  renderTable(filtered);
+}
 
 function renderChart(data) {
   const ctx = document.getElementById('phishingChart').getContext('2d');
@@ -170,8 +207,10 @@ function renderChart(data) {
       datasets: [{
         label: 'Site Check Results',
         data: [safePhishing, unsafePhishing, validSSL, invalidSSL, safeML, unsafeML],
-        backgroundColor: ['#4CAF50', '#FF6384', '#4CAF50', '#FF6384', '#4CAF50', '#FF6384'],
-        borderColor: ['#4CAF50', '#FF6384', '#4CAF50', '#FF6384', '#4CAF50', '#FF6384'],
+        backgroundColor: baseColors.map((color, i) => 
+          selectedSegments.has(chartInstance?.data.labels[i]) || selectedSegments.size === 0 ? color : `${color}4D`
+        ),
+        borderColor: baseColors,
         borderWidth: 1
       }]
     },
@@ -187,15 +226,50 @@ function renderChart(data) {
             const label = chartInstance.data.labels[index];
             visibleSegments[label] = !visibleSegments[label];
             chartInstance.toggleDataVisibility(index);
+            selectedSegments.clear();
+            justReset = false;
+            chartInstance.data.datasets[0].backgroundColor = baseColors;
             chartInstance.update();
+            document.getElementById('resetLink').style.display = 'none';
             const filtered = filterScans();
             renderTable(filtered);
           }
         },
         title: { display: true, text: 'Site Check Overview' }
+      },
+      onClick: (e, elements) => {
+        if (elements.length > 0) {
+          const index = elements[0].index;
+          const clickedLabel = chartInstance.data.labels[index];
+          
+          if (justReset && selectedSegments.size === chartInstance.data.labels.length) {
+            selectedSegments.clear();
+            selectedSegments.add(clickedLabel);
+            justReset = false;
+          } else {
+            if (selectedSegments.has(clickedLabel)) {
+              selectedSegments.delete(clickedLabel);
+            } else {
+              selectedSegments.add(clickedLabel);
+            }
+          }
+
+          chartInstance.data.datasets[0].backgroundColor = baseColors.map((color, i) => 
+            selectedSegments.has(chartInstance.data.labels[i]) || selectedSegments.size === 0 ? color : `${color}4D`
+          );
+          chartInstance.data.datasets[0].data.forEach((_, i) => {
+            chartInstance.setDatasetVisibility(0, true);
+          });
+          chartInstance.update();
+          document.getElementById('resetLink').style.display = selectedSegments.size < chartInstance.data.labels.length ? 'block' : 'none';
+          const filtered = filterScans();
+          renderTable(filtered);
+        }
       }
     }
   });
+
+  document.getElementById('resetLink').addEventListener('click', resetFilters);
 }
 
 function initColumnResize() {
@@ -207,13 +281,14 @@ function initColumnResize() {
   let startWidthLeft = 0;
   let startWidthRight = 0;
 
-  headers.forEach((th, index) => {
+  headers.slice(0, 4).forEach((th, index) => { // Changed from slice(0, 3) to slice(0, 4)
     const handle = th.querySelector('.resize-handle');
+    if (!handle) return;
     handle.addEventListener('mousedown', (e) => {
       e.stopPropagation();
-      thBeingResized = th; // Left column
-      nextTh = index < headers.length - 1 ? headers[index + 1] : null; // Right column, null for last handle
-      if (!nextTh) return; // Skip if last column (no right neighbor)
+      thBeingResized = th;
+      nextTh = index < 3 ? headers[index + 1] : null; // Only resize up to 3rd column's right edge
+      if (!nextTh) return;
       startX = e.pageX;
       startWidthLeft = thBeingResized.offsetWidth;
       startWidthRight = nextTh.offsetWidth;
@@ -228,9 +303,10 @@ function initColumnResize() {
     const newWidthLeft = startWidthLeft + delta;
     const newWidthRight = startWidthRight - delta;
 
-    if (newWidthLeft >= 100 && newWidthRight >= 100) { // 100px minimum for both
+    if (newWidthLeft >= 100 && newWidthRight >= 100) {
       thBeingResized.style.width = `${newWidthLeft}px`;
       nextTh.style.width = `${newWidthRight}px`;
+      syncFixedHeaderWidths();
     }
   }
 
@@ -241,4 +317,46 @@ function initColumnResize() {
     document.removeEventListener('mousemove', resizeColumn);
     document.removeEventListener('mouseup', stopResize);
   }
+}
+
+function initStickyHeaders() {
+  const table = document.getElementById('siteCheckTable');
+  const originalThead = table.querySelector('thead');
+  const clonedThead = originalThead.cloneNode(true);
+  clonedThead.classList.add('fixed-thead');
+  
+  clonedThead.querySelectorAll('.resize-handle').forEach(handle => handle.remove());
+  
+  document.body.appendChild(clonedThead);
+  syncFixedHeaderWidths();
+
+  window.addEventListener('scroll', () => {
+    const tableRect = table.getBoundingClientRect();
+    const theadRect = originalThead.getBoundingClientRect();
+    
+    if (theadRect.top <= 0 && tableRect.bottom > 0) {
+      clonedThead.style.display = 'table-header-group';
+      clonedThead.style.left = `${tableRect.left}px`;
+      clonedThead.style.width = `${tableRect.width}px`;
+    } else {
+      clonedThead.style.display = 'none';
+    }
+  });
+
+  window.addEventListener('resize', syncFixedHeaderWidths);
+}
+
+function syncFixedHeaderWidths() {
+  const table = document.getElementById('siteCheckTable');
+  const tableRect = table.getBoundingClientRect();
+  const originalThs = table.querySelectorAll('thead th');
+  const fixedThs = document.querySelectorAll('.fixed-thead th');
+  
+  originalThs.forEach((th, index) => {
+    const width = th.offsetWidth;
+    fixedThs[index].style.width = `${width}px`;
+  });
+  const fixedThead = document.querySelector('.fixed-thead');
+  fixedThead.style.left = `${tableRect.left}px`;
+  fixedThead.style.width = `${tableRect.width}px`;
 }
