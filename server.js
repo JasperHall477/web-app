@@ -10,9 +10,11 @@ const axios = require('axios');
 const app = express();
 
 const allowedOrigins = [
-  'https://web-app-lemon-chi.vercel.app',
+  // Main Render Site URL
   'https://web-app-j994.onrender.com',
+  // AI model server URL
   'https://url-safety-server.onrender.com',
+  // Local for local development testing
   'http://localhost:3000',
 ];
 
@@ -173,6 +175,51 @@ app.get('/api/getAllSiteChecks', verifyToken, async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error retrieving site checks' });
+  }
+});
+
+app.post('/api/virustotal-check', async (req, res) => {
+  const { url } = req.body;
+
+  if (!url) {
+    return res.status(400).json({ error: 'URL is required' });
+  }
+
+  try {
+    // Step 1: Encode the URL for submission
+    const encodedUrl = Buffer.from(url).toString('base64').replace(/=+$/, ''); // Base64-URL encoding
+
+    // Step 2: Submit the URL for scanning 
+    await axios.post(
+      'https://www.virustotal.com/api/v3/urls',
+      `url=${encodeURIComponent(url)}`,
+      {
+        headers: {
+          'x-apikey': '7918452bd93717b2fe3b663ba924bb9a94fb20ee089a5ab6a655f750a8833a8c',
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      }
+    );
+
+    // Step 3: Retrieve scan result
+    const result = await axios.get(
+      `https://www.virustotal.com/api/v3/urls/${encodedUrl}`,
+      {
+        headers: { 'x-apikey': '7918452bd93717b2fe3b663ba924bb9a94fb20ee089a5ab6a655f750a8833a8c' },
+      }
+    );
+
+    const positives = result.data.data.attributes.last_analysis_stats.malicious;
+    const total = result.data.data.attributes.last_analysis_stats.harmless +
+                  result.data.data.attributes.last_analysis_stats.malicious +
+                  result.data.data.attributes.last_analysis_stats.suspicious;
+
+    const verdict = positives > 0 ? 'Unsafe' : 'Safe';
+
+    res.json({ verdict, positives, total });
+  } catch (error) {
+    console.error('VirusTotal error:', error.message);
+    res.status(500).json({ error: 'Failed to retrieve VirusTotal scan results' });
   }
 });
 
