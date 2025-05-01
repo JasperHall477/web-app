@@ -66,7 +66,12 @@ const siteCheckSchema = new mongoose.Schema({
   checkResult: {
     phishing: { type: String, required: true },
     ssl: { type: String, required: true },
-    mlPrediction: { type: String, required: true }
+    mlPrediction: { type: String, required: true },
+    virusTotal: { type: String, required: false }
+  },
+  virusTotalStats: {
+    positives: { type: Number, required: false },
+    total: { type: Number, required: false }
   },
   validUntil: { type: Date, required: false },  // New field for SSL valid until date
   date: { type: Date, default: Date.now },  // Automatically set the current date
@@ -127,7 +132,7 @@ app.get('/checkURL', (req, res) => {
 
 // Apply middleware to the endpoint
 app.post('/api/addSiteCheck', verifyToken, async (req, res) => {
-  const { url, checkResult, validUntil } = req.body;
+  const { url, checkResult, validUntil, virusTotal  } = req.body;
   const userId = req.user.username; // Use token's username, ignore body userId
 
   try {
@@ -136,7 +141,12 @@ app.post('/api/addSiteCheck', verifyToken, async (req, res) => {
       checkResult: {
         phishing: checkResult.phishing,
         ssl: checkResult.ssl,
-        mlPrediction: checkResult.mlPrediction // Store ML result
+        mlPrediction: checkResult.mlPrediction, // Store ML result
+        virusTotal: virusTotal?.verdict || 'Unknown'
+      },
+      virusTotalStats: {
+        positives: virusTotal?.positives || 0,
+        total: virusTotal?.total || 0
       },
       validUntil: validUntil ? new Date(validUntil) : null,
       date: new Date(),

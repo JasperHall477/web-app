@@ -119,6 +119,10 @@ function renderTable(data) {
     const mlCell = row.insertCell();
     mlCell.textContent = item.checkResult.mlPrediction || 'N/A';
     mlCell.style.color = item.checkResult.mlPrediction === 'Unsafe' ? 'red' : 'green';
+    const vtCell = row.insertCell();
+    const vtVerdict = item.checkResult.virusTotal || 'Unknown';
+    vtCell.textContent = vtVerdict;
+    vtCell.style.color = vtVerdict === 'Malicious' ? 'red' : vtVerdict === 'Suspicious' ? 'orange' : 'green';
     const detailsCell = row.insertCell();
     const detailsBtn = document.createElement('button');
     detailsBtn.textContent = 'Details';
@@ -133,6 +137,8 @@ function showDetails(item) {
     Phishing: ${item.checkResult.phishing}
     SSL: ${item.checkResult.ssl}
     ML Prediction: ${item.checkResult.mlPrediction || 'N/A'}
+    VirusTotal: ${item.checkResult.virusTotal || 'Unknown'}
+    ${item.virusTotalStats ? `Detections: ${item.virusTotalStats.positives}/${item.virusTotalStats.total}` : ''}
     Scanned On: ${new Date(item.date).toLocaleString()}
     ${item.validUntil ? `SSL Valid Until: ${new Date(item.validUntil).toLocaleString()}` : ''}
   `;
