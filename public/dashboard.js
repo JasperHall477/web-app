@@ -311,13 +311,13 @@ function initColumnResize() {
   let startWidthLeft = 0;
   let startWidthRight = 0;
 
-  headers.slice(0, 4).forEach((th, index) => { // Changed from slice(0, 3) to slice(0, 4)
+  headers.slice(0, 5).forEach((th, index) => { 
     const handle = th.querySelector('.resize-handle');
     if (!handle) return;
     handle.addEventListener('mousedown', (e) => {
       e.stopPropagation();
       thBeingResized = th;
-      nextTh = index < 3 ? headers[index + 1] : null; // Only resize up to 3rd column's right edge
+      nextTh = index < 4 ? headers[index + 1] : null; // Only resize up to 4th column's right edge
       if (!nextTh) return;
       startX = e.pageX;
       startWidthLeft = thBeingResized.offsetWidth;
