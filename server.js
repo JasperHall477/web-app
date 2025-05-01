@@ -188,6 +188,8 @@ app.get('/api/getAllSiteChecks', verifyToken, async (req, res) => {
   }
 });
 
+
+
 app.post('/api/virustotal-check', async (req, res) => {
   const { url } = req.body;
 
@@ -219,12 +221,17 @@ app.post('/api/virustotal-check', async (req, res) => {
       }
     );
 
-    const positives = result.data.data.attributes.last_analysis_stats.malicious;
-    const total = result.data.data.attributes.last_analysis_stats.harmless +
-                  result.data.data.attributes.last_analysis_stats.malicious +
-                  result.data.data.attributes.last_analysis_stats.suspicious;
+    const stats = result.data.data.attributes.last_analysis_stats;
+    const positives = stats.malicious;
+    const total = stats.harmless + stats.malicious + stats.suspicious;
 
-    const verdict = positives > 0 ? 'Unsafe' : 'Safe';
+    // Adjusted verdict logic
+    let verdict = 'Safe';
+    if (positives >= 5) {
+      verdict = 'Unsafe';
+    } else if (positives > 0 && positives < 5) {
+      verdict = 'Suspicious';
+    }
 
     res.json({ verdict, positives, total });
   } catch (error) {

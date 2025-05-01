@@ -120,24 +120,33 @@ function renderTable(data) {
     mlCell.textContent = item.checkResult.mlPrediction || 'N/A';
     mlCell.style.color = item.checkResult.mlPrediction === 'Unsafe' ? 'red' : 'green';
     const vtCell = row.insertCell();
-    let vtColor = 'gray';
+    const positives = item.virusTotalStats?.positives ?? 0;
+    const total = item.virusTotalStats?.total ?? 0;
+
     let vtText = 'Not Scanned';
+    let vtColor = 'gray';
+    let tooltip = 'No scan was performed using VirusTotal.';
 
-    if (item.checkResult.virusTotal !== undefined && item.checkResult.virusTotal !== 'Not Scanned') {
-      const positives = item.virusTotalStats?.positives ?? 0;
-      const total = item.virusTotalStats?.total ?? 0;
-      vtText = `${item.checkResult.virusTotal} (${positives}/${total})`;
-
+    if (item.checkResult.virusTotal && item.checkResult.virusTotal !== 'Not Scanned') {
       if (positives === 0) {
+        vtText = `Safe (0/${total})`;
         vtColor = 'green';
-      } else if (positives === 1) {
+        tooltip = '0 engines flagged this site as malicious.';
+      } else if (positives > 0 && positives < 5) {
+        vtText = `Suspicious (${positives}/${total})`;
         vtColor = 'orange';
-      } else if (positives > 1) {
+        tooltip = `${positives} out of ${total} engines flagged this site as suspicious.`;
+      } else {
+        vtText = `Unsafe (${positives}/${total})`;
         vtColor = 'red';
+        tooltip = `${positives} out of ${total} engines flagged this site as unsafe.`;
       }
     }
+
     vtCell.textContent = vtText;
     vtCell.style.color = vtColor;
+    vtCell.title = tooltip;
+
     const detailsCell = row.insertCell();
     const detailsBtn = document.createElement('button');
     detailsBtn.textContent = 'Details';
