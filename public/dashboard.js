@@ -174,17 +174,61 @@ function showDetails(item) {
   alert(details);
 }
 
+// function sortTable(column, asc = true) {
+//   const filtered = filterScans();
+//   const sorted = filtered.sort((a, b) => {
+//     const valuesA = [a.url, a.checkResult.phishing, a.checkResult.ssl, a.checkResult.mlPrediction || 'N/A'];
+//     const valueA = valuesA[column];
+//     const valueB = column === 0 ? b.url : 
+//                    column === 1 ? b.checkResult.phishing : 
+//                    column === 2 ? b.checkResult.ssl : 
+//                    b.checkResult.mlPrediction || 'N/A';
+//     return asc ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA);
+//   });
+//   renderTable(sorted);
+//   renderChart(sorted);
+// }
+
 function sortTable(column, asc = true) {
   const filtered = filterScans();
   const sorted = filtered.sort((a, b) => {
-    const valuesA = [a.url, a.checkResult.phishing, a.checkResult.ssl, a.checkResult.mlPrediction || 'N/A'];
-    const valueA = valuesA[column];
-    const valueB = column === 0 ? b.url : 
-                   column === 1 ? b.checkResult.phishing : 
-                   column === 2 ? b.checkResult.ssl : 
-                   b.checkResult.mlPrediction || 'N/A';
-    return asc ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA);
+    let valueA, valueB;
+
+    switch (column) {
+      case 0:
+        valueA = a.url;
+        valueB = b.url;
+        break;
+      case 1:
+        valueA = a.checkResult.phishing;
+        valueB = b.checkResult.phishing;
+        break;
+      case 2:
+        valueA = a.checkResult.ssl;
+        valueB = b.checkResult.ssl;
+        break;
+      case 3:
+        valueA = a.checkResult.mlPrediction || 'N/A';
+        valueB = b.checkResult.mlPrediction || 'N/A';
+        break;
+      case 4:
+        const posA = a.virusTotalStats?.positives ?? 0;
+        const posB = b.virusTotalStats?.positives ?? 0;
+        valueA = posA;
+        valueB = posB;
+        break;
+      default:
+        valueA = '';
+        valueB = '';
+    }
+
+    if (typeof valueA === 'number' && typeof valueB === 'number') {
+      return asc ? valueA - valueB : valueB - valueA;
+    } else {
+      return asc ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA);
+    }
   });
+
   renderTable(sorted);
   renderChart(sorted);
 }
