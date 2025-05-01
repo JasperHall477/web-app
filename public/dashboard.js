@@ -120,9 +120,20 @@ function renderTable(data) {
     mlCell.textContent = item.checkResult.mlPrediction || 'N/A';
     mlCell.style.color = item.checkResult.mlPrediction === 'Unsafe' ? 'red' : 'green';
     const vtCell = row.insertCell();
-    const vtVerdict = item.checkResult.virusTotal || 'Unknown';
-    vtCell.textContent = vtVerdict;
-    vtCell.style.color = vtVerdict === 'Malicious' ? 'red' : vtVerdict === 'Suspicious' ? 'orange' : 'green';
+    if (item.virusTotal && typeof item.virusTotal.positives === 'number') {
+      const { positives, total } = item.virusTotal;
+      vtCell.textContent = `${positives}/${total}`;
+      if (positives === 0) {
+        vtCell.style.color = 'green';
+      } else if (positives === 1) {
+        vtCell.style.color = 'orange';
+      } else {
+        vtCell.style.color = 'red';
+      }
+    } else {
+      vtCell.textContent = 'Not Scanned';
+      vtCell.style.color = 'gray';
+    }
     const detailsCell = row.insertCell();
     const detailsBtn = document.createElement('button');
     detailsBtn.textContent = 'Details';
