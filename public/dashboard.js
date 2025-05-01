@@ -119,6 +119,8 @@ function renderTable(data) {
     const mlCell = row.insertCell();
     mlCell.textContent = item.checkResult.mlPrediction || 'N/A';
     mlCell.style.color = item.checkResult.mlPrediction === 'Unsafe' ? 'red' : 'green';
+    
+    // virus total
     const vtCell = row.insertCell();
     const positives = item.virusTotalStats?.positives ?? 0;
     const total = item.virusTotalStats?.total ?? 0;
@@ -143,9 +145,12 @@ function renderTable(data) {
       }
     }
 
-    vtCell.textContent = vtText;
-    vtCell.style.color = vtColor;
-    vtCell.title = tooltip;
+    vtCell.innerHTML = `
+    <span class="tooltip-container" style="color: ${vtColor};">
+      ${vtText}
+      <span class="tooltip-text">${tooltip}</span>
+    </span>
+  `;
 
     const detailsCell = row.insertCell();
     const detailsBtn = document.createElement('button');
