@@ -181,7 +181,7 @@ button:hover {
   padding: 0 1rem;
   text-align: left;
   border-bottom: 1px solid #ddd;
-  overflow: hidden;
+  overflow: visible;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
