@@ -25,6 +25,9 @@
     <form id="registerForm">
       <label for="username">Username:</label>
       <input type="text" id="username" name="username" required>
+      <label for="confirmUsername">Confirm Username:</label>
+<input type="text" id="confirmUsername" name="confirmUsername" required>
+<p id="usernameError" style="color: red; display: none;">Usernames do not match.</p>
       <label for="password">Password:</label>
       <input type="password" id="password" name="password" required>
       <button type="submit">Register</button>

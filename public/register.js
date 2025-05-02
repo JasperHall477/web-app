@@ -1,20 +1,27 @@
-
 document.getElementById('registerForm').addEventListener('submit', function (event) {
-  event.preventDefault();  // Prevent form from submitting the default way
+  event.preventDefault();  // Prevent default form submission
 
-  const username = document.getElementById('username').value;
+  const username = document.getElementById('username').value.trim();
+  const confirmUsername = document.getElementById('confirmUsername').value.trim();
   const password = document.getElementById('password').value;
 
-  // Send registration data to the server
+  const errorElement = document.getElementById('usernameError');
+
+  if (username !== confirmUsername) {
+    errorElement.style.display = 'block';
+    return;
+  } else {
+    errorElement.style.display = 'none';
+  }
+
+  // Proceed with sending registration data
   fetch('https://web-app-j994.onrender.com/register', {
-  //fetch('http://localhost:3000/register', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password })
   })
     .then(response => response.json())
     .then(data => {
-      console.log(data);  // Log response from server
       if (data.message === 'User registered successfully') {
         alert('Registration Successful!');
         window.location.href = '/login.html';
