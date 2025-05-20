@@ -36,14 +36,16 @@ const baseColors = [
   '#66BB6A', '#EF5350', '#4CAF50', '#F44336', '#81C784', '#D32F2F'
 ];
 
+// Send GET request to fetch all site check records for the logged in user
 fetch('https://web-app-j994.onrender.com/api/getAllSiteChecks', {
   method: 'GET',
   headers: {
-    'Authorization': `Bearer ${token}`,
+    'Authorization': `Bearer ${token}`, // Use JWT for secure access
     'Content-Type': 'application/json',
   },
 })
   .then(response => {
+    // If unautherodised or session expired request a relog
     if (!response.ok) {
       if (response.status === 401 || response.status === 403) {
         alert('Session expired or invalid. Please log in again.');
@@ -56,6 +58,7 @@ fetch('https://web-app-j994.onrender.com/api/getAllSiteChecks', {
     return response.json();
   })
   .then(data => {
+    // Store scan data and render into ui components
     allScans = data;
     renderTable(allScans);
     renderChart(allScans);
@@ -64,6 +67,7 @@ fetch('https://web-app-j994.onrender.com/api/getAllSiteChecks', {
     initStickyHeaders();
   })
   .catch(error => {
+    // Fallback protocol to show error message in the table if fetch fails
     console.error('Error fetching site checks:', error);
     const table = document.getElementById('siteCheckTable').getElementsByTagName('tbody')[0];
     const row = table.insertRow();
@@ -120,31 +124,40 @@ function renderTable(data) {
     mlCell.textContent = item.checkResult.mlPrediction || 'N/A';
     mlCell.style.color = item.checkResult.mlPrediction === 'Unsafe' ? 'red' : 'green';
     
-    // virus total
+    // Insert a new cell to current table row for VirusTotal result
     const vtCell = row.insertCell();
+
+    // Get the number of posative detections and total scans from data retrieved from DB
     const positives = item.virusTotalStats?.positives ?? 0;
     const total = item.virusTotalStats?.total ?? 0;
 
+    // Default values if no scan was performed using VirusTotal for this URL
     let vtText = 'Not Scanned';
     let vtColor = 'gray';
     let tooltip = 'No scan was performed using VirusTotal.';
 
+    // If a scan result exists, determin the verdict from number of detections
     if (item.checkResult.virusTotal && item.checkResult.virusTotal !== 'Not Scanned') {
+      // 0 detections means it is safe
       if (positives === 0) {
         vtText = `Safe (0/${total})`;
         vtColor = 'green';
         tooltip = '0 engines flagged this site as malicious.';
+      // If there are between 1 and 5 detections it is a suspicious URL (according to VirusTotal)
       } else if (positives > 0 && positives < 5) {
         vtText = `Suspicious (${positives}/${total})`;
         vtColor = 'orange';
         tooltip = `${positives} out of ${total} engines flagged this site as suspicious.`;
+        // More than 5 detections is likely unsafe.
       } else {
         vtText = `Unsafe (${positives}/${total})`;
         vtColor = 'red';
+        // Add tooltip to explain to user on mouse hover
         tooltip = `${positives} out of ${total} engines flagged this site as unsafe.`;
       }
     }
 
+    // Create a tooltip container to display text as VirusTotal details are more complex
     vtCell.innerHTML = `
     <span class="tooltip-container" style="color: ${vtColor};">
       ${vtText}

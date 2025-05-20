@@ -73,8 +73,8 @@ const siteCheckSchema = new mongoose.Schema({
     positives: { type: Number, required: false },
     total: { type: Number, required: false }
   },
-  validUntil: { type: Date, required: false },  // New field for SSL valid until date
-  date: { type: Date, default: Date.now },  // Automatically set the current date
+  validUntil: { type: Date, required: false },  
+  date: { type: Date, default: Date.now },  
   userId: { type: String, required: true }
 });
 
@@ -130,18 +130,20 @@ app.get('/checkURL', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'checkURL.html'));
 });
 
-// Apply middleware to the endpoint
+// POST endpoint to save results of a site scan to the database
 app.post('/api/addSiteCheck', verifyToken, async (req, res) => {
+  // Extract required fields from the request body
   const { url, checkResult, validUntil, virusTotal  } = req.body;
   const userId = req.user.username; // Use token's username, ignore body userId
 
   try {
+    // Create a new document for the site check using the provided data
     const newCheck = new SiteCheck({
       url,
       checkResult: {
         phishing: checkResult.phishing,
         ssl: checkResult.ssl,
-        mlPrediction: checkResult.mlPrediction, // Store ML result
+        mlPrediction: checkResult.mlPrediction, 
         virusTotal: virusTotal?.verdict || 'Unknown'
       },
       virusTotalStats: {
@@ -153,6 +155,7 @@ app.post('/api/addSiteCheck', verifyToken, async (req, res) => {
       userId,
     });
 
+    // Send a success response
     await newCheck.save();
     res.status(201).json({ message: 'Site check saved successfully' });
   } catch (error) {
