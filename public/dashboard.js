@@ -23,8 +23,8 @@ function logout() {
 let allScans = [];
 let chartInstance = null;
 let visibleSegments = {
-  'Safe (Phishing)': true,
-  'Unsafe (Phishing)': true,
+  'Safe (Safe Browsing)': true,
+  'Unsafe (Safe Browsing)': true,
   'Valid (SSL)': true,
   'Invalid (SSL)': true,
   'Safe (ML)': true,
@@ -78,8 +78,8 @@ fetch('https://web-app-j994.onrender.com/api/getAllSiteChecks', {
 function filterScans() {
   if (selectedSegments.size === 0) {
     return allScans.filter(scan => {
-      const phishingMatch = (visibleSegments['Safe (Phishing)'] && scan.checkResult.phishing === 'Safe') ||
-                           (visibleSegments['Unsafe (Phishing)'] && scan.checkResult.phishing === 'Unsafe');
+      const phishingMatch = (visibleSegments['Safe (Safe Browsing)'] && scan.checkResult.phishing === 'Safe') ||
+                           (visibleSegments['Unsafe (Safe Browsing)'] && scan.checkResult.phishing === 'Unsafe');
       const sslMatch = (visibleSegments['Valid (SSL)'] && scan.checkResult.ssl.startsWith('Valid')) ||
                        (visibleSegments['Invalid (SSL)'] && !scan.checkResult.ssl.startsWith('Valid'));
       const mlMatch = (visibleSegments['Safe (ML)'] && scan.checkResult.mlPrediction === 'Safe') ||
@@ -89,8 +89,8 @@ function filterScans() {
   } else {
     return allScans.filter(scan => {
       return (
-        (selectedSegments.has('Safe (Phishing)') && scan.checkResult.phishing === 'Safe') ||
-        (selectedSegments.has('Unsafe (Phishing)') && scan.checkResult.phishing === 'Unsafe') ||
+        (selectedSegments.has('Safe (Safe Browsing)') && scan.checkResult.phishing === 'Safe') ||
+        (selectedSegments.has('Unsafe (Safe Browsing)') && scan.checkResult.phishing === 'Unsafe') ||
         (selectedSegments.has('Valid (SSL)') && scan.checkResult.ssl.startsWith('Valid')) ||
         (selectedSegments.has('Invalid (SSL)') && !scan.checkResult.ssl.startsWith('Valid')) ||
         (selectedSegments.has('Safe (ML)') && scan.checkResult.mlPrediction === 'Safe') ||
@@ -176,7 +176,7 @@ function renderTable(data) {
 function showDetails(item) {
   const details = `
     URL: ${item.url}
-    Phishing: ${item.checkResult.phishing}
+    Safe Browsing: ${item.checkResult.phishing}
     SSL: ${item.checkResult.ssl}
     ML Prediction: ${item.checkResult.mlPrediction || 'N/A'}
     VirusTotal: ${item.checkResult.virusTotal || 'Unknown'}
@@ -295,7 +295,7 @@ function renderChart(data) {
   chartInstance = new Chart(ctx, {
     type: 'pie',
     data: {
-      labels: ['Safe (Phishing)', 'Unsafe (Phishing)', 'Valid (SSL)', 'Invalid (SSL)', 'Safe (ML)', 'Unsafe (ML)'],
+      labels: ['Safe (Safe Browsing)', 'Unsafe (Safe Browsing)', 'Valid (SSL)', 'Invalid (SSL)', 'Safe (ML)', 'Unsafe (ML)'],
       datasets: [{
         label: 'Site Check Results',
         data: [safePhishing, unsafePhishing, validSSL, invalidSSL, safeML, unsafeML],
